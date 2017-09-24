@@ -17,6 +17,20 @@
 
 class Lesson < ApplicationRecord
 
+  # should live (in future) in Rails config or somewhere...
+  LESSONS = {
+    "1" => {
+      starts_at: "8:00",
+      ends_at:   "9:35"
+    },
+    "2" => {
+      starts_at: "9:45",
+      ends_at:   "11:20"
+    }
+  }
+
   belongs_to :group
+
+  
 
 end
