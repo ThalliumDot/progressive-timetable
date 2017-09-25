@@ -6,8 +6,8 @@ class CreateLesson < ActiveRecord::Migration[5.1]
       t.string  :type
       t.string  :teacher
       t.integer :dates, array: true, default: []
-      t.jsonb   :timing, default: {}
-      t.integer :group_id
+      t.string  :timing
+      t.integer :group_id, null: false
       t.string  :classroom
 
       t.timestamps
