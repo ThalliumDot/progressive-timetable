@@ -13,6 +13,7 @@
  *= require './fonts/fonts.css.erb'
  *= require './vuetify/vuetify.min.css'
  *= require './vuetify/custom-vuetify.css.scss'
+ *= require material_icons
  * require_tree .
  *= require_self
  */
