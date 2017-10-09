@@ -12,8 +12,10 @@ import App from '../App'
 import router from '../router'
 
 /* eslint-disable no-new */
-new Vue({
-  router,
-  template: '<App/></App>',
-  components: { App }
-}).$mount('#app')
+document.addEventListener('DOMContentLoaded', () => {
+  new Vue({
+    router,
+    template: '<App/></App>',
+    components: { App }
+  }).$mount('#app')
+})

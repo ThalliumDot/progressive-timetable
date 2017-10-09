@@ -1,7 +1,7 @@
 class TimetablesController < ApplicationController
 
   def show
-    head :ok
+    render json: {}
   end
 
 end

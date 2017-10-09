@@ -6,10 +6,11 @@ import { ShowTimetable } from './views/timetable'
 Vue.use(Router)
 
 export default new Router({
+  mode: 'history',
   scrollBehavior: () => ({ y: 0 }),
   routes: [
     {
-      path: '/timetable',
+      path: '/',
       name: 'ShowTimetable',
       component: ShowTimetable
     }
