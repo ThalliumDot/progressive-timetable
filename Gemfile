@@ -15,6 +15,8 @@ gem 'turbolinks', '~> 5'
 gem 'webpacker', '~> 3.0'
 gem 'annotate', require: false
 
+gem 'nokogiri', '~> 1.8.1'
+
 # See https://github.com/rails/execjs#readme for more supported runtimes
 # gem 'therubyracer', platforms: :ruby
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder

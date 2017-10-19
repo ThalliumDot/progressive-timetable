@@ -181,6 +181,7 @@ DEPENDENCIES
   annotate
   capybara (~> 2.13)
   listen (>= 3.0.5, < 3.2)
+  nokogiri (~> 1.8.1)
   pg (~> 0.18)
   pry
   puma (~> 3.7)
@@ -195,4 +196,4 @@ DEPENDENCIES
   webpacker (~> 3.0)
 
 BUNDLED WITH
-   1.13.6
+   1.15.3
