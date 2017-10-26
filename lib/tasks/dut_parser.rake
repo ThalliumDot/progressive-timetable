@@ -13,28 +13,33 @@ def parse_timetable
   # FileUtils::mkdir_p "#{university}"
 
   faculties = find_faculties(url)
-  # puts faculties
-  faculties.each do |faculty_name, faculty_number|
-    # FileUtils::mkdir_p "#{university}/#{faculty_name}"
-    faculty = Faculty.find_by_or_create(faculty_name)
-    url_with_faculty = url + "?TimeTableForm[faculty]=#{faculty_number}"
-    courses = find_courses(url_with_faculty)
 
-    courses.each do |course_name, course_number|
-    #   FileUtils::mkdir_p "#{university}/#{faculty_name}/#{course_name}"
-      url_with_faculty_and_course = url_with_faculty + "&TimeTableForm[course]=#{course_number}"
-      groups = find_groups(url_with_faculty_and_course)
-      save_groups(faculty, groups, course_name)
+      # change + to "#{}"
+  # faculties.each do |faculty_name, faculty_number|
+  #   # FileUtils::mkdir_p "#{university}/#{faculty_name}"
+  #   faculty = Faculty.find_by_or_create(faculty_name)
+  #   url_with_faculty = url + "?TimeTableForm[faculty]=#{faculty_number}"
+  #   courses = find_courses(url_with_faculty)
 
-      groups.each do |group_name, group_number|
-        # dir = "#{university}/#{faculty_name}/#{course_name}/#{group_name}"
-        # FileUtils::mkdir_p dir
-        timetable_url = url_with_faculty_and_course + "&TimeTableForm[group]=#{group_number}"
+  #   courses.each do |course_name, course_number|
+  #   #   FileUtils::mkdir_p "#{university}/#{faculty_name}/#{course_name}"
+  #     url_with_faculty_and_course = url_with_faculty + "&TimeTableForm[course]=#{course_number}"
+  #     groups = find_groups(url_with_faculty_and_course)
+  #     save_groups(faculty, groups, course_name)
 
-        parse_group_timetable(faculty, group_name, timetable_url)
-      end
-    end
-  end
+  #     groups.each do |group_name, group_number|
+  #       # dir = "#{university}/#{faculty_name}/#{course_name}/#{group_name}"
+  #       # FileUtils::mkdir_p dir
+  #       timetable_url = url_with_faculty_and_course + "&TimeTableForm[group]=#{group_number}"
+
+  #       parse_group_timetable(faculty, group_name, timetable_url)
+  #     end
+  #   end
+  # end
+  timetable_url = "#{url}?TimeTableForm[faculty]=1&TimeTableForm[course]=3&TimeTableForm[group]=1071"
+  faculty = Faculty.find_by_or_create("Факультет Інформаційних технологій")
+  group = faculty.groups.find_by_or_create("КСД-31", 3)
+  parse_group_timetable(group, timetable_url)
 end
 
 def find_university(url)
@@ -82,7 +87,7 @@ def save_groups(faculty, groups, course_name)
   end
 end
 
-def parse_group_timetable(faculty, group_name, timetable_url)
+def parse_group_timetable(group, timetable_url)
   timetable = {}
 
   html = Nokogiri::HTML(open(timetable_url))
@@ -102,12 +107,7 @@ def parse_group_timetable(faculty, group_name, timetable_url)
 
     timetable[day] = dates_and_lessons
   end
-  save_timetable(faculty, group_name, timetable)
-
-  # File.open("#{dir}/#{group_name}.txt", 'w') { |file|
-  #   file.puts "\n---------#{group_name}---------\n\n"
-  #   file.puts JSON.pretty_generate(result)
-  # }
+  save_timetable(group, timetable)
 end
 
 def find_lessons_information(lessons_divs)
@@ -116,15 +116,36 @@ def find_lessons_information(lessons_divs)
   lessons_divs.each do |div|
     next if div['data-content'].nil?
     lesson_shortcut = div.text[/.+\]/]
-    lesson_shortcut.strip! unless lesson_shortcut.nil?
+
+    if lesson_shortcut
+      lesson_shortcut.strip!
+      if lesson_shortcut.include? '['
+        short_name = lesson_shortcut.match(/(.+)\[/)[1]
+        type = lesson_shortcut.match(/\[(.+)\]/)[1]
+      end
+    end
+
     click_information = div['data-content'].split('<br>').map{ |row| row.strip }
-    click_information.reject! { |s| s.nil? || s.strip.empty? }
-    lessons_information << click_information.unshift(lesson_shortcut)
+    clean(click_information)
+    lessons_information << click_information.unshift(type, short_name)
   end
 
   lessons_information
 end
 
-def save_timetable(faculty, group_name, timetable)
-  puts timetable
+def clean(click_information)
+  click_information.reject! { |s| s.nil? || s.strip.empty? }
+  click_information.collect! do |element|
+    if element.include? '['
+      element.match(/(.+)\[/)[1]
+    elsif element.include? 'ауд'
+      element.match(/ауд. (.+)/)[1]
+    else
+      element
+    end
+  end
+end
+
+def save_timetable(group, timetable)
+  # puts timetable
 end
