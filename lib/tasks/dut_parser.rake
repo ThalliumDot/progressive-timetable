@@ -107,7 +107,7 @@ def parse_group_timetable(group, timetable_url)
 
     timetable[day] = dates_and_lessons
   end
-  save_timetable(group, timetable)
+  # group.lessons = find_by_or_create(timetable)
 end
 
 def find_lessons_information(lessons_divs)
@@ -127,7 +127,7 @@ def find_lessons_information(lessons_divs)
 
     click_information = div['data-content'].split('<br>').map{ |row| row.strip }
     clean(click_information)
-    lessons_information << click_information.unshift(type, short_name)
+    lessons_information << make_lesson_information(type, short_name, click_information)
   end
 
   lessons_information
@@ -146,6 +146,16 @@ def clean(click_information)
   end
 end
 
-def save_timetable(group, timetable)
-  # puts timetable
+def make_lesson_information(type, short_name, click_information)
+  if (type.nil? && short_name.nil? && click_information.blank?)
+    return nil
+  end
+  lesson_information = {
+    type: type,
+    short_name: short_name,
+    long_name: click_information[0],
+    classroom: click_information[1],
+    teacher: click_information[2],
+    other: [click_information[3], click_information[4]]
+  }
 end
