@@ -93,7 +93,7 @@ def parse_group_timetable(group, timetable_url)
   html = Nokogiri::HTML(open(timetable_url))
   html.css('.timeTable tr').each do |tr|
     dates_and_lessons = {}
-    lesson_numbers = tr.css('td')[0].css('.lesson').map { |lesson| lesson.text }
+    lesson_numbers = tr.css('td')[0].css('.lesson').map { |lesson| lesson.text[/\d/] }
     day = tr.css('td')[0].css('div')[0].text
     tds = tr.css('td')
 
@@ -107,7 +107,7 @@ def parse_group_timetable(group, timetable_url)
 
     timetable[day] = dates_and_lessons
   end
-  # group.lessons = find_by_or_create(timetable)
+  group.lessons.find_by_or_create(timetable)
 end
 
 def find_lessons_information(lessons_divs)
@@ -151,7 +151,7 @@ def make_lesson_information(type, short_name, click_information)
     return nil
   end
   lesson_information = {
-    type: type,
+    lesson_type: type,
     short_name: short_name,
     long_name: click_information[0],
     classroom: click_information[1],
