@@ -15,22 +15,22 @@ def parse_timetable
   faculties = find_faculties(url)
 
       # change + to "#{}"
-  # faculties.each do |faculty_name, faculty_number|
+  # faculties.each do |faculty_name, faculty_id|
   #   # FileUtils::mkdir_p "#{university}/#{faculty_name}"
   #   faculty = Faculty.find_by_or_create(faculty_name)
-  #   url_with_faculty = url + "?TimeTableForm[faculty]=#{faculty_number}"
+  #   url_with_faculty = url + "?TimeTableForm[faculty]=#{faculty_id}"
   #   courses = find_courses(url_with_faculty)
 
-  #   courses.each do |course_name, course_number|
+  #   courses.each do |course_name, course_id|
   #   #   FileUtils::mkdir_p "#{university}/#{faculty_name}/#{course_name}"
-  #     url_with_faculty_and_course = url_with_faculty + "&TimeTableForm[course]=#{course_number}"
+  #     url_with_faculty_and_course = url_with_faculty + "&TimeTableForm[course]=#{course_id}"
   #     groups = find_groups(url_with_faculty_and_course)
   #     save_groups(faculty, groups, course_name)
 
-  #     groups.each do |group_name, group_number|
+  #     groups.each do |group_name, group_id|
   #       # dir = "#{university}/#{faculty_name}/#{course_name}/#{group_name}"
   #       # FileUtils::mkdir_p dir
-  #       timetable_url = url_with_faculty_and_course + "&TimeTableForm[group]=#{group_number}"
+  #       timetable_url = url_with_faculty_and_course + "&TimeTableForm[group]=#{group_id}"
 
   #       parse_group_timetable(faculty, group_name, timetable_url)
   #     end
@@ -50,32 +50,33 @@ end
 def find_faculties(url)
   html = Nokogiri::HTML(open(url))
   faculty_options_tag = html.css('select#TimeTableForm_faculty option')
-  faculty_numbers = numbers(faculty_options_tag)
+  faculty_ids = find_ids(faculty_options_tag)
   faculty_names = names(faculty_options_tag)
-  Hash[faculty_names.zip(faculty_numbers)]
+  Hash[faculty_names.zip(faculty_ids)]
 end
 
 def find_courses(url)
   html = Nokogiri::HTML(open(url))
   course_options_tag = html.css('select#TimeTableForm_course option')
-  course_numbers = numbers(course_options_tag)
+  course_ids = find_ids(course_options_tag)
   course_names = names(course_options_tag)
-  Hash[course_names.zip(course_numbers)]
+  Hash[course_names.zip(course_ids)]
 end
 
 def find_groups(url)
   html = Nokogiri::HTML(open(url))
   group_options_tag = html.css('select#TimeTableForm_group option')
-  group_numbers = numbers(group_options_tag)
+  group_ids = find_ids(group_options_tag)
   group_names = names(group_options_tag)
-  Hash[group_names.zip(group_numbers)]
+  Hash[group_names.zip(group_ids)]
 end
 
-def numbers(options_tag)
-  numbers = options_tag.map { |option| option.values[0] }
-  numbers.reject! { |s| s.nil? || s.strip.empty? }
+def find_ids(options_tag)
+  ids = options_tag.map { |option| option.values[0] }
+  ids.reject! { |s| s.nil? || s.strip.empty? }
 end
 
+# Searching for names of faculties, courses and groups to store in db
 def names(options_tag)
   names = options_tag.map { |option| option.text }
   names.reject! { |s| s.nil? || s.strip.empty? || s == '\n' || s == "\u00A0"}
