@@ -108,7 +108,7 @@ def parse_group_timetable(group, timetable_url)
 
     timetable[day] = dates_and_lessons
   end
-  group.lessons.find_by_or_create(timetable)
+  compare_parse_lessons_and_db_lessons(group, timetable)
 end
 
 def find_lessons_information(lessons_divs)
@@ -159,4 +159,70 @@ def make_lesson_information(type, short_name, click_information)
     teacher: click_information[2],
     other: [click_information[3], click_information[4]]
   }
+end
+
+def compare_parse_lessons_and_db_lessons(group, timetable)
+  db_lessons = group.lessons
+  parse_lessons = rebuild_timetable(timetable)
+  binding.pry
+
+end
+
+def find_lesson(db_lessons, lesson_information, timing)
+  db_lessons.each do |lesson|
+    if (lesson.timing == timing &&
+        lesson.lesson_type == lesson_information[:lesson_type] &&
+        lesson.short_name == lesson_information[:short_name] &&
+        lesson.teacher == lesson_information[:teacher] &&
+        lesson.classroom == lesson_information[:classroom])
+      return lesson
+    end
+  end
+
+  return nil
+end
+
+def rebuild_timetable(timetable)
+  parse_lessons = []
+
+  timetable.each_value do |dates|
+    dates.each do |date, timings|
+      # made Unix time
+      date = Time.zone.parse(date).to_i
+      timings.each do |timing, lesson_information|
+        next if (lesson_information.nil?)
+
+        index = check_parse_lessons(parse_lessons, lesson_information, timing)
+        if index.blank?
+          new_parse_lesson = new_lesson(lesson_information, timing, date)
+          parse_lessons << new_parse_lesson
+          next
+        end
+        if parse_lessons[index][:dates].exclude?(date)
+          parse_lessons[index][:dates] << date
+        end
+      end
+    end
+  end
+  parse_lessons
+end
+
+def check_parse_lessons(parse_lessons, lesson_information, timing)
+  parse_lessons.each_with_index do |lesson, index|
+    if (lesson[:timing] == timing &&
+        lesson[:lesson_type] == lesson_information[:lesson_type] &&
+        lesson[:short_name] == lesson_information[:short_name] &&
+        lesson[:teacher] == lesson_information[:teacher] &&
+        lesson[:classroom] == lesson_information[:classroom])
+      return index
+    end
+  end
+
+  return nil
+end
+
+def new_lesson(lesson_information, timing, date)
+  new_lesson = {timing: timing, dates: [date]}
+  new_lesson.merge!(lesson_information)
+  new_lesson
 end
