@@ -164,22 +164,25 @@ end
 def compare_parse_lessons_and_db_lessons(group, timetable)
   db_lessons = group.lessons
   parse_lessons = rebuild_timetable(timetable)
-  binding.pry
 
-end
-
-def find_lesson(db_lessons, lesson_information, timing)
-  db_lessons.each do |lesson|
-    if (lesson.timing == timing &&
-        lesson.lesson_type == lesson_information[:lesson_type] &&
-        lesson.short_name == lesson_information[:short_name] &&
-        lesson.teacher == lesson_information[:teacher] &&
-        lesson.classroom == lesson_information[:classroom])
-      return lesson
+  parse_lessons.each do |parse_lesson|
+    db_lesson = find_db_lesson(db_lessons, parse_lesson)
+    if db_lesson.blank?
+      group.lessons.create!(
+        short_name: parse_lesson[:short_name],
+        long_name: parse_lesson[:long_name],
+        lesson_type: parse_lesson[:lesson_type],
+        teacher: parse_lesson[:teacher],
+        dates: parse_lesson[:dates],
+        timing: parse_lesson[:timing],
+        classroom: parse_lesson[:classroom]
+      )
+      next
+    end
+    if (db_lesson.dates <=> parse_lesson[:dates]) != 0
+      db_lesson.update(dates: parse_lesson[:dates])
     end
   end
-
-  return nil
 end
 
 def rebuild_timetable(timetable)
@@ -225,4 +228,19 @@ def new_lesson(lesson_information, timing, date)
   new_lesson = {timing: timing, dates: [date]}
   new_lesson.merge!(lesson_information)
   new_lesson
+end
+
+
+def find_db_lesson(db_lessons, parse_lesson)
+  db_lessons.each do |db_lesson|
+    if (db_lesson.timing == parse_lesson[:timing] &&
+        db_lesson.lesson_type == parse_lesson[:lesson_type] &&
+        db_lesson.short_name == parse_lesson[:short_name] &&
+        db_lesson.teacher == parse_lesson[:teacher] &&
+        db_lesson.classroom == parse_lesson[:classroom])
+      return db_lesson
+    end
+  end
+
+  return nil
 end
