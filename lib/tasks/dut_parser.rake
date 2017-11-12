@@ -9,30 +9,24 @@ end
 
 def parse_timetable
   url = "http://e-rozklad.dut.edu.ua/timeTable/group"
-  university = find_university(url)
-  # FileUtils::mkdir_p "#{university}"
+  # university = find_university(url)
 
-  faculties = find_faculties(url)
+  # faculties = find_faculties(url)
 
-      # change + to "#{}"
   # faculties.each do |faculty_name, faculty_id|
-  #   # FileUtils::mkdir_p "#{university}/#{faculty_name}"
   #   faculty = Faculty.find_by_or_create(faculty_name)
   #   url_with_faculty = url + "?TimeTableForm[faculty]=#{faculty_id}"
   #   courses = find_courses(url_with_faculty)
 
   #   courses.each do |course_name, course_id|
-  #   #   FileUtils::mkdir_p "#{university}/#{faculty_name}/#{course_name}"
   #     url_with_faculty_and_course = url_with_faculty + "&TimeTableForm[course]=#{course_id}"
   #     groups = find_groups(url_with_faculty_and_course)
   #     save_groups(faculty, groups, course_name)
 
   #     groups.each do |group_name, group_id|
-  #       # dir = "#{university}/#{faculty_name}/#{course_name}/#{group_name}"
-  #       # FileUtils::mkdir_p dir
   #       timetable_url = url_with_faculty_and_course + "&TimeTableForm[group]=#{group_id}"
-
-  #       parse_group_timetable(faculty, group_name, timetable_url)
+  #       group = faculty.groups.find_by_or_create(group_name, course_name)
+  #       parse_group_timetable(group, timetable_url)
   #     end
   #   end
   # end
