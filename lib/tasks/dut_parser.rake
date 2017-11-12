@@ -36,13 +36,17 @@ def parse_timetable
   #     end
   #   end
   # end
+
+  #
+  # test timetable for group КСД-31
+  #
   timetable_url = "#{url}?TimeTableForm[faculty]=1&TimeTableForm[course]=3&TimeTableForm[group]=1071"
   faculty = Faculty.find_by_or_create("Факультет Інформаційних технологій")
   group = faculty.groups.find_by_or_create("КСД-31", 3)
   parse_group_timetable(group, timetable_url)
 
   # deleting all records with empty dates
-  Lesson.where(dates:[]).delete_all
+  Lesson.delete_empty_dates();
 end
 
 def find_university(url)
@@ -111,7 +115,9 @@ def parse_group_timetable(group, timetable_url)
 
     timetable[day] = dates_and_lessons
   end
-  compare_parse_lessons_and_db_lessons(group, timetable)
+
+  db_lessons = group.lessons
+  Lesson.compare_parse_lessons_and_db_lessons(db_lessons, timetable)
 end
 
 def find_lessons_information(lessons_divs)
@@ -162,100 +168,4 @@ def make_lesson_information(type, short_name, click_information)
     teacher: click_information[2],
     other: [click_information[3], click_information[4]]
   }
-end
-
-def compare_parse_lessons_and_db_lessons(group, timetable)
-  db_lessons = group.lessons
-  parse_lessons = rebuild_timetable(timetable)
-
-  parse_lessons.each do |parse_lesson|
-    db_lesson = find_exact_match(db_lessons, parse_lesson)
-    if db_lesson.blank?
-      find_enough_match_and_update_dates(db_lessons, parse_lesson)
-      group.lessons.create!(
-        short_name: parse_lesson[:short_name],
-        long_name: parse_lesson[:long_name],
-        lesson_type: parse_lesson[:lesson_type],
-        teacher: parse_lesson[:teacher],
-        dates: parse_lesson[:dates],
-        timing: parse_lesson[:timing],
-        classroom: parse_lesson[:classroom]
-      )
-      next
-    end
-    if (db_lesson.dates <=> parse_lesson[:dates]) != 0
-      db_lesson.update(dates: parse_lesson[:dates])
-    end
-  end
-end
-
-def rebuild_timetable(timetable)
-  parse_lessons = []
-
-  timetable.each_value do |dates|
-    dates.each do |date, timings|
-      # made Unix time
-      date = Time.zone.parse(date).to_i
-      timings.each do |timing, lesson_information|
-        next if (lesson_information.nil?)
-
-        index = check_parse_lessons(parse_lessons, lesson_information, timing)
-        if index.blank?
-          new_parse_lesson = new_lesson(lesson_information, timing, date)
-          parse_lessons << new_parse_lesson
-          next
-        end
-        if parse_lessons[index][:dates].exclude?(date)
-          parse_lessons[index][:dates] << date
-        end
-      end
-    end
-  end
-  parse_lessons
-end
-
-def check_parse_lessons(parse_lessons, lesson_information, timing)
-  parse_lessons.each_with_index do |lesson, index|
-    if (lesson[:timing] == timing &&
-        lesson[:lesson_type] == lesson_information[:lesson_type] &&
-        lesson[:short_name] == lesson_information[:short_name] &&
-        lesson[:teacher] == lesson_information[:teacher] &&
-        lesson[:classroom] == lesson_information[:classroom])
-      return index
-    end
-  end
-
-  return nil
-end
-
-def new_lesson(lesson_information, timing, date)
-  new_lesson = {timing: timing, dates: [date]}
-  new_lesson.merge!(lesson_information)
-  new_lesson
-end
-
-def find_exact_match(db_lessons, parse_lesson)
-  db_lessons.each do |db_lesson|
-    if (db_lesson.timing == parse_lesson[:timing] &&
-        db_lesson.lesson_type == parse_lesson[:lesson_type] &&
-        db_lesson.short_name == parse_lesson[:short_name] &&
-        db_lesson.teacher == parse_lesson[:teacher] &&
-        db_lesson.classroom == parse_lesson[:classroom])
-      return db_lesson
-    end
-  end
-
-  return nil
-end
-
-def find_enough_match_and_update_dates(db_lessons, parse_lesson)
-  db_lessons.each do |db_lesson|
-    if (db_lesson.lesson_type == parse_lesson[:lesson_type] &&
-        db_lesson.short_name == parse_lesson[:short_name]) &&
-        (db_lesson.timing == parse_lesson[:timing] ||
-        (db_lesson.dates <=> parse_lesson[:dates]) == 0)
-      dates = db_lesson.dates.reject { |date| parse_lesson[:dates].include?(date) }
-      db_lesson.update(dates: dates)
-    end
-  end
 end
