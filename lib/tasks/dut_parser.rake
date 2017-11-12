@@ -40,6 +40,9 @@ def parse_timetable
   faculty = Faculty.find_by_or_create("Факультет Інформаційних технологій")
   group = faculty.groups.find_by_or_create("КСД-31", 3)
   parse_group_timetable(group, timetable_url)
+
+  # deleting all records with empty dates
+  Lesson.where(dates:[]).delete_all
 end
 
 def find_university(url)
@@ -166,8 +169,9 @@ def compare_parse_lessons_and_db_lessons(group, timetable)
   parse_lessons = rebuild_timetable(timetable)
 
   parse_lessons.each do |parse_lesson|
-    db_lesson = find_db_lesson(db_lessons, parse_lesson)
+    db_lesson = find_exact_match(db_lessons, parse_lesson)
     if db_lesson.blank?
+      find_enough_match_and_update_dates(db_lessons, parse_lesson)
       group.lessons.create!(
         short_name: parse_lesson[:short_name],
         long_name: parse_lesson[:long_name],
@@ -230,8 +234,7 @@ def new_lesson(lesson_information, timing, date)
   new_lesson
 end
 
-
-def find_db_lesson(db_lessons, parse_lesson)
+def find_exact_match(db_lessons, parse_lesson)
   db_lessons.each do |db_lesson|
     if (db_lesson.timing == parse_lesson[:timing] &&
         db_lesson.lesson_type == parse_lesson[:lesson_type] &&
@@ -243,4 +246,16 @@ def find_db_lesson(db_lessons, parse_lesson)
   end
 
   return nil
+end
+
+def find_enough_match_and_update_dates(db_lessons, parse_lesson)
+  db_lessons.each do |db_lesson|
+    if (db_lesson.lesson_type == parse_lesson[:lesson_type] &&
+        db_lesson.short_name == parse_lesson[:short_name]) &&
+        (db_lesson.timing == parse_lesson[:timing] ||
+        (db_lesson.dates <=> parse_lesson[:dates]) == 0)
+      dates = db_lesson.dates.reject { |date| parse_lesson[:dates].include?(date) }
+      db_lesson.update(dates: dates)
+    end
+  end
 end
