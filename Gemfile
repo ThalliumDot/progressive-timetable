@@ -14,6 +14,7 @@ gem 'uglifier', '>= 1.3.0'
 gem 'turbolinks', '~> 5'
 gem 'webpacker', '~> 3.0'
 gem 'annotate', require: false
+gem 'material_icons'
 
 gem 'nokogiri', '~> 1.8.1'
 
