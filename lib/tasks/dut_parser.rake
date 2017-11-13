@@ -10,7 +10,6 @@ end
 def parse_timetable
   url = "http://e-rozklad.dut.edu.ua/timeTable/group"
   # university = find_university(url)
-
   # faculties = find_faculties(url)
 
   # faculties.each do |faculty_name, faculty_id|
@@ -31,6 +30,7 @@ def parse_timetable
   #   end
   # end
 
+
   #
   # test timetable for group КСД-31
   #
@@ -39,8 +39,9 @@ def parse_timetable
   group = faculty.groups.find_by_or_create("КСД-31", 3)
   parse_group_timetable(group, timetable_url)
 
+
   # deleting all records with empty dates
-  Lesson.delete_empty_dates();
+  Lesson.delete_empty_dates()
 end
 
 def find_university(url)
@@ -110,8 +111,9 @@ def parse_group_timetable(group, timetable_url)
     timetable[day] = dates_and_lessons
   end
 
-  db_lessons = group.lessons
-  Lesson.compare_parse_lessons_and_db_lessons(db_lessons, timetable)
+  lessons = group.lessons
+  parsed_lessons = rebuild_timetable(timetable)
+  compare_lessons(lessons, parsed_lessons)
 end
 
 def find_lessons_information(lessons_divs)
@@ -162,4 +164,90 @@ def make_lesson_information(type, short_name, click_information)
     teacher: click_information[2],
     other: [click_information[3], click_information[4]]
   }
+end
+
+def rebuild_timetable(timetable)
+  parsed_lessons = []
+
+  timetable.each_value do |dates|
+    dates.each do |date, timings|
+      # made Unix time
+      date = Time.zone.parse(date).to_i
+      timings.each do |timing, lesson_information|
+        next if (lesson_information.nil?)
+        index = check_parsed_lessons(parsed_lessons, lesson_information, timing)
+        if index.blank?
+          new_parsed_lesson = new_lesson(lesson_information, timing, date)
+          parsed_lessons << new_parsed_lesson
+          next
+        end
+        if parsed_lessons[index][:dates].exclude?(date)
+          parsed_lessons[index][:dates] << date
+        end
+      end
+    end
+  end
+  parsed_lessons
+end
+
+def check_parsed_lessons(parsed_lessons, lesson_information, timing)
+  parsed_lessons.each_with_index do |lesson, index|
+    if (lesson[:timing] == timing &&
+        lesson[:lesson_type] == lesson_information[:lesson_type] &&
+        lesson[:short_name] == lesson_information[:short_name] &&
+        lesson[:teacher] == lesson_information[:teacher] &&
+        lesson[:classroom] == lesson_information[:classroom])
+      return index
+    end
+  end
+
+  return nil
+end
+
+def new_lesson(lesson_information, timing, date)
+  new_lesson = {timing: timing, dates: [date]}
+  new_lesson.merge!(lesson_information)
+  new_lesson
+end
+
+def compare_lessons(lessons, parsed_lessons)
+  parsed_lessons.each do |parsed_lesson|
+    lesson = find_exact_match(lessons, parsed_lesson)
+    if lesson.blank?
+      lesson = find_enough_match(lessons, parsed_lesson)
+      if lesson.present?
+        lesson.reject_and_update_dates(lesson.dates, parsed_lesson[:dates])
+      end
+      Lesson.create_lesson(lessons, parsed_lesson)
+      next
+    end
+    lesson.check_and_update_dates(lesson.dates, parsed_lesson[:dates])
+  end
+end
+
+def find_exact_match(lessons, parsed_lesson)
+  lessons.each do |lesson|
+    if (lesson.timing == parsed_lesson[:timing] &&
+        lesson.lesson_type == parsed_lesson[:lesson_type] &&
+        lesson.short_name == parsed_lesson[:short_name] &&
+        lesson.teacher == parsed_lesson[:teacher] &&
+        lesson.classroom == parsed_lesson[:classroom])
+      return lesson
+    end
+  end
+
+  return nil
+end
+
+def find_enough_match(lessons, parsed_lesson)
+  lessons.each do |lesson|
+    if (lesson.lesson_type == parsed_lesson[:lesson_type] &&
+        lesson.short_name == parsed_lesson[:short_name]) &&
+        (lesson.timing == parsed_lesson[:timing] ||
+        (lesson.dates <=> parsed_lesson[:dates]) == 0)
+      return lesson
+    end
+  end
+
+  return nil
 end
