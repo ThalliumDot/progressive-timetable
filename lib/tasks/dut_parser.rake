@@ -91,29 +91,47 @@ def save_groups(faculty, groups, course_name)
 end
 
 def parse_group_timetable(group, timetable_url)
-  timetable = {}
+  time_intervals = find_time_intervals
+  time_intervals.each do |time_interval|
+    timetable = {}
+    timetable_url += "&TimeTableForm[date1]=#{time_interval[:from]}&TimeTableForm[date2]=#{time_interval[:to]}"
 
-  html = Nokogiri::HTML(open(timetable_url))
-  html.css('.timeTable tr').each do |tr|
-    dates_and_lessons = {}
-    lesson_numbers = tr.css('td')[0].css('.lesson').map { |lesson| lesson.text[/\d/] }
-    day = tr.css('td')[0].css('div')[0].text
-    tds = tr.css('td')
-
-    tds.each do |td|
-      next if td.css('.cell-vertical').any?
-      date = td.css('div')[0].text
-      lessons_divs = td.css('div')
-      lessons_information = find_lessons_information(lessons_divs)
-      dates_and_lessons[date] = Hash[lesson_numbers.zip(lessons_information)]
+    html = Nokogiri::HTML(open(timetable_url))
+    html.css('.timeTable tr').each do |tr|
+      dates_and_lessons = {}
+      lesson_numbers = tr.css('td')[0].css('.lesson').map { |lesson| lesson.text[/\d/] }
+      day = tr.css('td')[0].css('div')[0].text
+      tds = tr.css('td')
+      tds.each do |td|
+        next if td.css('.cell-vertical').any?
+        date = td.css('div')[0].text
+        lessons_divs = td.css('div')
+        lessons_information = find_lessons_information(lessons_divs)
+        dates_and_lessons[date] = Hash[lesson_numbers.zip(lessons_information)]
+      end
+      timetable[day] = dates_and_lessons
     end
 
-    timetable[day] = dates_and_lessons
-  end
+    parsed_lessons = rebuild_timetable(timetable)
+    next if parsed_lessons.blank?
 
-  lessons = group.lessons
-  parsed_lessons = rebuild_timetable(timetable)
-  compare_lessons(lessons, parsed_lessons)
+    lessons = group.lessons
+    compare_lessons(lessons, parsed_lessons)
+  end
+end
+
+def find_time_intervals
+  current_time = Time.now
+  after_3_months = current_time + 3.month
+  after_6_months = after_3_months + 1.day + 3.month
+  after_9_months = after_6_months + 1.day + 3.month
+  after_12_months = after_9_months + 1.day + 3.month
+  time_intervals = [
+    { from: "#{current_time.strftime("%d.%m.%Y")}", to: "#{after_3_months.strftime("%d.%m.%Y")}" },
+    { from: "#{(after_3_months + 1.day).strftime("%d.%m.%Y")}", to: "#{after_6_months.strftime("%d.%m.%Y")}" },
+    { from: "#{(after_6_months + 1.day).strftime("%d.%m.%Y")}", to: "#{after_9_months.strftime("%d.%m.%Y")}" },
+    { from: "#{(after_9_months + 1.day).strftime("%d.%m.%Y")}", to: "#{after_12_months.strftime("%d.%m.%Y")}" }
+  ]
 end
 
 def find_lessons_information(lessons_divs)
