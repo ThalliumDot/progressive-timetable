@@ -32,6 +32,7 @@
     </thead>
     <tbody>
     <tr
+      v-ripple
       v-for="week in monthDates"
       :class="{ 'selected-week': selectedWeek == week.weekNumber}"
       @click="selectedWeek = week.weekNumber"
@@ -50,6 +51,19 @@
     </tbody>
   </table>
 
+  <div class="calendar-container__divider"></div>
+
+  <ul class="lesson_types">
+    <li class="lesson_types__item lesson_types__item_lecture">
+      <p class="subheading">Лекция</p>
+    </li>
+    <li class="lesson_types__item">
+      <p class="subheading">Практичне заняття</p>
+    </li>
+    <li class="lesson_types__item">
+      <p class="subheading">Лабораторне заняття</p>
+    </li>
+  </ul>
 </div>
 </template>
 
@@ -252,10 +266,11 @@
 <style scoped lang="scss" type="text/scss">
 
   $border-style: 1px solid transparent;
-
+  $badge-size: 23px;
 
   .calendar-container {
-    background: linear-gradient(to bottom, #3B6186, #516270);
+    background: linear-gradient(150deg, #3469ff 10%, #9708CC 100%);
+
     color: #fff;
     padding: 0 15px;
 
@@ -281,6 +296,7 @@
       width: 100%;
       border-collapse: separate;
       border-spacing: 0 2px;
+      margin-bottom: 10px;
 
       td, th {
         text-align: center;
@@ -352,6 +368,36 @@
 
       .not-current-month {
         color: rgba(255, 255, 255, 0.4)
+      }
+    }
+
+    .lesson_types {
+      list-style: none;
+      padding: 0;
+
+      &__item {
+        padding-left: $badge-size;
+
+        &:before {
+          content: '';
+          display: inline-block;
+          width:  $badge-size;
+          height: $badge-size;
+          background-color: rgba(0, 0, 0, 0.31);
+          margin-left: -$badge-size;
+          border-radius: $badge-size;
+          position: absolute;
+        }
+
+        p {
+          margin-left: 20px;
+        }
+      }
+
+      &__item_lecture {
+        &:before {
+          background: linear-gradient(to right bottom, rgba(0, 255, 8, 0.75), rgb(0, 255, 231));
+        }
       }
     }
   }

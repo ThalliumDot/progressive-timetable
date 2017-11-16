@@ -4,6 +4,7 @@
   <v-container fluid class="px-0">
     <v-layout row wrap>
       <Calendar
+        ref="calendar"
         @weekChanged="displayWeekSchedule"
       />
       <div class="timetable-container">
@@ -14,7 +15,7 @@
             v-for="i in 7"
           >
             <h4 class="text-xs-center">{{ week.days[i - 1].date.getDate() }}</h4>
-            <h5 class="text-xs-center"></h5>
+            <h5 class="text-xs-center">{{ dayNames[i - 1] }}</h5>
           </div>
         </div>
       </div>
@@ -35,14 +36,24 @@
     data() {
       return {
         week: null,
+        dayNames: [],
+        lessons: {
+          1: [
+            {}
+          ]
+        }
       }
+    },
+
+    mounted() {
+      this.dayNames = this.$refs.calendar.dayNames
     },
 
     methods: {
       displayWeekSchedule(val) {
         this.week = val
       }
-    }
+    },
   }
 </script>
 
