@@ -57,10 +57,10 @@
     <li class="lesson_types__item lesson_types__item_lecture">
       <p class="subheading">Лекция</p>
     </li>
-    <li class="lesson_types__item">
+    <li class="lesson_types__item lesson_types__item_practice">
       <p class="subheading">Практичне заняття</p>
     </li>
-    <li class="lesson_types__item">
+    <li class="lesson_types__item lesson_types__item_laboratory">
       <p class="subheading">Лабораторне заняття</p>
     </li>
   </ul>
@@ -394,10 +394,17 @@
         }
       }
 
-      &__item_lecture {
-        &:before {
-          background: linear-gradient(to right bottom, rgba(0, 255, 8, 0.75), rgb(0, 255, 231));
-        }
+      &__item_lecture:before {
+        /*background: linear-gradient(to right bottom, rgba(0, 255, 8, 0.75), rgb(0, 255, 231));*/
+        background-color: #ffb440;
+      }
+
+      &__item_practice:before {
+        background-color: #5ac572;
+      }
+
+      &__item_laboratory:before {
+        background-color: #43c0ff;
       }
     }
   }
