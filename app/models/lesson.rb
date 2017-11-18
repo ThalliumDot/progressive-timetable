@@ -70,6 +70,12 @@ class Lesson < ApplicationRecord
   end
 
   def check_and_update_dates(lesson_dates, parsed_dates)
-    self.update(dates: parsed_dates) if (lesson_dates <=> parsed_dates) != 0
+    if (lesson_dates <=> parsed_dates) != 0
+      new_dates = lesson_dates
+      parsed_dates.each do |parsed_date|
+        new_dates << parsed_date if lesson_dates.exclude?(parsed_date)
+      end
+      self.update(dates: new_dates)
+    end
   end
 end
