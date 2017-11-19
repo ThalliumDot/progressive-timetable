@@ -395,16 +395,15 @@
       }
 
       &__item_lecture:before {
-        /*background: linear-gradient(to right bottom, rgba(0, 255, 8, 0.75), rgb(0, 255, 231));*/
-        background-color: #ffb440;
+        background: linear-gradient(to right, #ffd400, #ffb440);
       }
 
       &__item_practice:before {
-        background-color: #5ac572;
+        background: linear-gradient(to right, #00d81b, #5ac572);
       }
 
       &__item_laboratory:before {
-        background-color: #43c0ff;
+        background: linear-gradient(to right, #00adff, #0089ff);
       }
     }
   }

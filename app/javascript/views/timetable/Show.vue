@@ -1,7 +1,7 @@
 <template>
 <main>
 
-  <v-container fluid class="px-0">
+  <v-container fluid class="px-0 pt-0">
     <v-layout row wrap>
       <Calendar
         ref="calendar"
@@ -19,26 +19,59 @@
             <h5 class="text-xs-center">{{ dayNames[i - 1] }}</h5>
 
             <div class="lessons">
-              <div class="lesson lecture">
-                <h5 class="text-xs-center lesson__time">8:00 - 9:35</h5>
-                <h6>ДПКСМ</h6>
-                <p class="mb-2">ауд. 419</p>
-                <p class="mb-2">Степанов М.М.</p>
-              </div>
+              <v-card
+                ripple
+                hover
+                class="lesson"
+              >
+                <v-card-media
+                  class="lecture"
+                >
+                  <p class="subheading text-xs-center lesson__time">8:00 - 9:35</p>
+                </v-card-media>
 
-              <div class="lesson practice">
-                <h5 class="text-xs-center lesson__time">9:45 - 11:20</h5>
-                <h6>ДПКСМ</h6>
-                <p class="mb-2">ауд. 404</p>
-                <p class="mb-2">Лосєв М.О.</p>
-              </div>
+                <v-card-title>
+                  <p class="subheading">ДПКСМ</p>
+                  <p class="mb-2">ауд. 419</p>
+                  <p class="mb-2">Степанов М.М.</p>
+                </v-card-title>
+              </v-card>
 
-              <div class="lesson laboratory">
-                <h5 class="text-xs-center lesson__time">11:45 - 13:20</h5>
-                <h6>ПКСМ-14</h6>
-                <p class="mb-2">ауд. 404</p>
-                <p class="mb-2">Степанов М.М.</p>
-              </div>
+              <v-card
+                ripple
+                hover
+                class="lesson"
+              >
+                <v-card-media
+                  class="practice"
+                >
+                  <p class="subheading text-xs-center lesson__time">9:45 - 11:20</p>
+                </v-card-media>
+
+                <v-card-title>
+                  <p class="subheading">ДПКСМ</p>
+                  <p class="mb-2">ауд. 404</p>
+                  <p class="mb-2">Лосєв М.О.</p>
+                </v-card-title>
+              </v-card>
+
+              <v-card
+                ripple
+                hover
+                class="lesson"
+              >
+                <v-card-media
+                  class="laboratory"
+                >
+                  <p class="subheading text-xs-center lesson__time">11:45 - 13:20</p>
+                </v-card-media>
+
+                <v-card-title>
+                  <p class="subheading">ПКСМ-14</p>
+                  <p class="mb-2">ауд. 404</p>
+                  <p class="mb-2">Степанов М.М.</p>
+                </v-card-title>
+              </v-card>
             </div>
           </div>
         </div>
@@ -90,54 +123,36 @@
 
         &:not(:last-child) {
           border-right: 2px solid #000;
-          border-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 80%, rgba(0, 0, 0, 0)) 1 100%;
+          border-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0)) 1 100%;
         }
 
         color: rgba(0, 0, 0, 0.25);
 
         .lessons {
-          padding: 0 10px;
+          padding: 0 5px;
           margin-top: 50px;
 
           .lesson {
             position: relative;
-            margin-top: 30px;
+            margin-top: 16px;
 
-            /*&:after {
-              content: '';
-              position: absolute;
-              width: 0;
-              height: 0;
-              border-left: 10px solid transparent;
-              border-right: 10px solid transparent;
-              border-bottom: 10px solid black;
-              top: -1px;
-              right: -6px;
-              transform: rotate(45deg);
-            }*/
+            .lecture{
+              background: linear-gradient(to right, #ffd400, #ffb440);
+            }
+            .practice{
+              background: linear-gradient(to right, #00d81b, #5ac572);
+            }
+            .laboratory{
+              background: linear-gradient(to right, #00adff, #0089ff);
+            }
 
             .lesson__time {
-              border-radius: 30px;
+              margin: 0 5px;
               color: #fff;
             }
 
-            &.lecture{
-              /*&:after { border-bottom: 10px solid #ff9b00; }*/
-              .lesson__time {
-                background-color: #ffb440;
-              }
-            }
-            &.practice{
-              /*&:after { border-bottom: 10px solid #58b729; }*/
-              .lesson__time {
-                background-color: #5ac572;
-              }
-            }
-            &.laboratory{
-              /*&:after { border-bottom: 10px solid #00aaff; }*/
-              .lesson__time {
-                background-color: #43c0ff;
-              }
+            p, h6, h5, h4, h3, h2, h1 {
+              width: 100%;
             }
           }
         }
