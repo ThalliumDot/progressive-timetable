@@ -289,14 +289,13 @@
     &__divider {
       height: 1px;
       background-color: rgba(255, 255, 255, 0.15);
-      margin-bottom: 10px;
+      margin: 10px 0;
     }
 
     &__body {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0 2px;
-      margin-bottom: 10px;
 
       td, th {
         text-align: center;
@@ -374,6 +373,7 @@
     .lesson_types {
       list-style: none;
       padding: 0;
+      margin-top: 40px;
 
       &__item {
         padding-left: $badge-size;
@@ -395,15 +395,15 @@
       }
 
       &__item_lecture:before {
-        background: linear-gradient(to right, #ffd400, #ffb440);
+        background: linear-gradient(to right, #ff8100, #ff511d);
       }
 
       &__item_practice:before {
-        background: linear-gradient(to right, #00d81b, #5ac572);
+        background: linear-gradient(to right, #0cbd00, #00a056);
       }
 
       &__item_laboratory:before {
-        background: linear-gradient(to right, #00adff, #0089ff);
+        background: linear-gradient(to right, #0095ff, #0072ff);
       }
     }
   }

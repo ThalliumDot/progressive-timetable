@@ -19,54 +19,36 @@
             <h5 class="text-xs-center">{{ dayNames[i - 1] }}</h5>
 
             <div class="lessons">
-              <v-card
-                ripple
-                hover
-                class="lesson"
-              >
-                <v-card-media
-                  class="lecture"
-                >
+              <v-card hover class="lesson">
+                <v-card-media class="lesson_lecture">
                   <p class="subheading text-xs-center lesson__time">8:00 - 9:35</p>
                 </v-card-media>
 
-                <v-card-title>
+                <v-card-title v-ripple @click.stop="dialog = true">
                   <p class="subheading">ДПКСМ</p>
                   <p class="mb-2">ауд. 419</p>
                   <p class="mb-2">Степанов М.М.</p>
                 </v-card-title>
               </v-card>
 
-              <v-card
-                ripple
-                hover
-                class="lesson"
-              >
-                <v-card-media
-                  class="practice"
-                >
+              <v-card hover class="lesson">
+                <v-card-media class="lesson_practice">
                   <p class="subheading text-xs-center lesson__time">9:45 - 11:20</p>
                 </v-card-media>
 
-                <v-card-title>
+                <v-card-title v-ripple @click.stop="dialog = true">
                   <p class="subheading">ДПКСМ</p>
                   <p class="mb-2">ауд. 404</p>
                   <p class="mb-2">Лосєв М.О.</p>
                 </v-card-title>
               </v-card>
 
-              <v-card
-                ripple
-                hover
-                class="lesson"
-              >
-                <v-card-media
-                  class="laboratory"
-                >
+              <v-card hover class="lesson">
+                <v-card-media class="lesson_laboratory">
                   <p class="subheading text-xs-center lesson__time">11:45 - 13:20</p>
                 </v-card-media>
 
-                <v-card-title>
+                <v-card-title v-ripple @click.stop="dialog = true">
                   <p class="subheading">ПКСМ-14</p>
                   <p class="mb-2">ауд. 404</p>
                   <p class="mb-2">Степанов М.М.</p>
@@ -78,6 +60,27 @@
       </div>
     </v-layout>
   </v-container>
+
+
+  <v-dialog v-model="dialog" max-width="500">
+    <v-card class="lesson-dialog">
+      <v-card-media class="lesson_laboratory">
+        <h6 class="text-xs-center lesson__time mx-1 my-3">9:45 - 11:20</h6>
+      </v-card-media>
+
+      <v-card-title class="headline">Супутникові системи зв'язку і навігації</v-card-title>
+
+      <v-card-text>
+        <p class="mb-2">аудиторія &ndash; 404</p>
+        <p class="mb-2">Махонін Євген Іванович</p>
+      </v-card-text>
+
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn color="green darken-1" flat="flat" @click.native="dialog = false">Ok</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 
 </main>
 </template>
@@ -94,6 +97,7 @@
       return {
         week: null,
         dayNames: [],
+        dialog: false,
       }
     },
 
@@ -136,19 +140,10 @@
             position: relative;
             margin-top: 16px;
 
-            .lecture{
-              background: linear-gradient(to right, #ffd400, #ffb440);
-            }
-            .practice{
-              background: linear-gradient(to right, #00d81b, #5ac572);
-            }
-            .laboratory{
-              background: linear-gradient(to right, #00adff, #0089ff);
-            }
-
             .lesson__time {
               margin: 0 5px;
               color: #fff;
+              cursor: default;
             }
 
             p, h6, h5, h4, h3, h2, h1 {
@@ -157,6 +152,25 @@
           }
         }
       }
+    }
+  }
+
+  .lesson_lecture{
+    background: linear-gradient(to right, #ff8100, #ff511d);
+  }
+  .lesson_practice{
+    background: linear-gradient(to right, #0cbd00, #00a056);
+  }
+  .lesson_laboratory{
+    background: linear-gradient(to right, #0095ff, #0072ff);
+  }
+
+  .lesson-dialog {
+    min-width: 300px;
+
+    .lesson__time {
+      width: 100%;
+      color: #fff;
     }
   }
 </style>
