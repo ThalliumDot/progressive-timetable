@@ -269,6 +269,7 @@
   $badge-size: 23px;
 
   .calendar-container {
+    z-index: 10;
     background: linear-gradient(150deg, #3469ff 10%, #9708CC 100%);
 
     color: #fff;

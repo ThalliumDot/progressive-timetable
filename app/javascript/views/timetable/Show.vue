@@ -9,12 +9,39 @@
       />
       <div class="timetable-container">
         <div class="timetable-container__row">
+          <div class="timetable-container__row__navbar">
+            <v-card class="timetable-navbar">
+              <v-card-title>
+                <v-layout row wrap>
+                  <v-flex sm3 class="pa-2">
+                    <v-select
+                      :items="faculties"
+                      v-model="faculty"
+                      label="Faculty"
+                      hide-details
+                      single-line
+                    ></v-select>
+                  </v-flex>
+                  <v-flex sm3 class="pa-2">
+                    <v-select
+                      :items="groups"
+                      v-model="group"
+                      label="Group"
+                      hide-details
+                      single-line
+                    ></v-select>
+                  </v-flex>
+                </v-layout>
+              </v-card-title>
+            </v-card>
+          </div>
+
           <div
             class="timetable-container__row__item"
             v-if="week"
             v-for="i in 7"
           >
-            <h4 class="text-xs-center">{{ week.days[i - 1].date.getDate() }}</h4>
+            <h4 class="text-xs-center mt-3">{{ week.days[i - 1].date.getDate() }}</h4>
 
             <h5 class="text-xs-center">{{ dayNames[i - 1] }}</h5>
 
@@ -98,6 +125,10 @@
         week: null,
         dayNames: [],
         dialog: false,
+        group:  null,
+        groups: ["БСД-11", "БСД-12", "БСД-13", "БСД-14", "СЗД-11", "УБД-11", "БСД-21", "БСД-22", "БСД-23", "БСД-24"],
+        faculty: null,
+        faculties: ["Навчально-науковий інститут захисту інформації", "Факультет Інформаційних технологій", "Факультет Телекомунікацій", "Навчально-науковий інститут менеджменту та підприємництва", "Загальні", "Навчально-науковий інститут заочного та дистанційного навчання", "Навчально-науковий інститут післядипломної освіти", "ННВЦ", "Навчально-науковий інститут гуманітарних та природничих дисциплін"],
       }
     },
 
@@ -120,7 +151,17 @@
 
     &__row {
       display: flex;
+      flex-wrap: wrap;
       height: 100%;
+
+      &__navbar {
+        width: 100%;
+        z-index: 9;
+
+        .timetable-navbar {
+          border-radius: 0;
+        }
+      }
 
       &__item {
         width: 14.285714%;
