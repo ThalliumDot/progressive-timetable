@@ -3,45 +3,39 @@ require 'open-uri'
 namespace :parse do
   desc ">> Parse timetable from http://e-rozklad.dut.edu.ua/"
   task dut: :environment do
-    parse_timetable()
-  end
-end
+    url = "http://e-rozklad.dut.edu.ua/timeTable/group"
+    faculties = find_faculties(url)
 
-def parse_timetable
-  url = "http://e-rozklad.dut.edu.ua/timeTable/group"
-  faculties = find_faculties(url)
+    faculties.each do |faculty_name, faculty_id|
+      faculty = Faculty.find_or_create_by(name: faculty_name)
+      url_with_faculty = url + "?TimeTableForm[faculty]=#{faculty_id}"
+      courses = find_courses(url_with_faculty)
 
-  faculties.each do |faculty_name, faculty_id|
-    faculty = Faculty.find_or_create_by(name: faculty_name)
-    url_with_faculty = url + "?TimeTableForm[faculty]=#{faculty_id}"
-    courses = find_courses(url_with_faculty)
+      courses.each do |course_name, course_id|
+        url_with_faculty_and_course = url_with_faculty + "&TimeTableForm[course]=#{course_id}"
+        groups = find_groups(url_with_faculty_and_course)
+        save_groups(faculty, groups, course_name)
 
-    courses.each do |course_name, course_id|
-      url_with_faculty_and_course = url_with_faculty + "&TimeTableForm[course]=#{course_id}"
-      groups = find_groups(url_with_faculty_and_course)
-      save_groups(faculty, groups, course_name)
+        groups.each do |group_name, group_id|
+          log_information("parsing started for faculty: '#{faculty_name}' course: #{course_name} group: '#{group_name}'")
 
-      groups.each do |group_name, group_id|
-        timetable_url = url_with_faculty_and_course + "&TimeTableForm[group]=#{group_id}"
-        group = faculty.groups.find_or_create_by(name: group_name, course: course_name)
-        parse_group_timetable(group, timetable_url)
+          timetable_url = url_with_faculty_and_course + "&TimeTableForm[group]=#{group_id}"
+          group = faculty.groups.find_or_create_by(name: group_name, course: course_name)
+          parse_group_timetable(group, timetable_url)
+        end
       end
     end
+
+
+    # test timetable for group КСД-31
+    #
+    # timetable_url = "#{url}?TimeTableForm[faculty]=1&TimeTableForm[course]=3&TimeTableForm[group]=1071"
+    # faculty = Faculty.find_or_create_by(name: "Факультет Інформаційних технологій")
+    # group = faculty.groups.find_or_create_by(name: "КСД-31", course: 3)
+    # parse_group_timetable(group, timetable_url)
   end
-
-
-  #
-  # test timetable for group КСД-31
-  #
-  # timetable_url = "#{url}?TimeTableForm[faculty]=1&TimeTableForm[course]=3&TimeTableForm[group]=1071"
-  # faculty = Faculty.find_or_create_by(name: "Факультет Інформаційних технологій")
-  # group = faculty.groups.find_or_create_by(name: "КСД-31", course: 3)
-  # parse_group_timetable(group, timetable_url)
-
-
-  # deleting all records with empty dates
-  Lesson.delete_empty_dates()
 end
+
 
 def find_faculties(url)
   html = Nokogiri::HTML(open(url))
@@ -110,20 +104,21 @@ def parse_group_timetable(group, timetable_url)
     next if parsed_lessons.blank?
 
     lessons = group.lessons
-    compare_lessons(lessons, parsed_lessons, time_interval)
+    compare_lessons(lessons, parsed_lessons, time_interval, group.id)
   end
 end
 
 def find_time_intervals
   current_time = Time.now
+
   [
     {
       from: current_time.strftime("%d.%m.%Y"),
-      to: (current_time + 3.month).strftime("%d.%m.%Y")
+      to:   (current_time + 3.month).strftime("%d.%m.%Y")
     },
     {
       from: (current_time + 3.month + 1.day).strftime("%d.%m.%Y"),
-      to: (current_time + 3.month + 1.day + 3.month).strftime("%d.%m.%Y")
+      to:   (current_time + 6.month + 1.day).strftime("%d.%m.%Y")
     }
   ]
 end
@@ -165,9 +160,10 @@ def clean(click_information)
 end
 
 def make_lesson_information(type, short_name, click_information)
-  if (type.nil? && short_name.nil? && click_information.blank?)
+  if type.nil? && short_name.nil? && click_information.blank?
     return nil
   end
+
   {
     lesson_type: type,
     short_name: short_name,
@@ -207,16 +203,12 @@ end
 
 def check_parsed_lessons(parsed_lessons, lesson_information, timing)
   parsed_lessons.each_with_index do |lesson, index|
-    if (lesson[:timing] == timing &&
-        lesson[:lesson_type] == lesson_information[:lesson_type] &&
-        lesson[:short_name] == lesson_information[:short_name] &&
-        lesson[:teacher] == lesson_information[:teacher] &&
-        lesson[:classroom] == lesson_information[:classroom])
+    if have_exact_match?(lesson, lesson_information, timing)
       return index
     end
   end
 
-  return nil
+  nil
 end
 
 def new_lesson(lesson_information, timing, date)
@@ -225,7 +217,7 @@ def new_lesson(lesson_information, timing, date)
   new_lesson
 end
 
-def compare_lessons(lessons, parsed_lessons, time_interval)
+def compare_lessons(lessons, parsed_lessons, time_interval, group_id)
   parsed_lessons.each do |parsed_lesson|
     lesson = find_exact_match(lessons, parsed_lesson)
     if lesson.blank?
@@ -233,7 +225,7 @@ def compare_lessons(lessons, parsed_lessons, time_interval)
       if lesson.present?
         lesson.reject_and_update_dates(lesson.dates, parsed_lesson[:dates])
       end
-      lessons.create_lesson(parsed_lesson)
+      Lesson.create(parsed_lesson.except(:other).merge(group_id: group_id))
       next
     end
     lesson.check_and_update_dates(lesson.dates, parsed_lesson[:dates])
@@ -244,7 +236,7 @@ def compare_lessons(lessons, parsed_lessons, time_interval)
     new_dates = lesson.dates
     new_dates.reject! do |date|
       next if date < unix_time(time_interval[:from]) || date > unix_time(time_interval[:to])
-      is_absent_in_parsed_lessons(lesson, date, parsed_lessons)
+      absent_in_parsed_lessons?(lesson, date, parsed_lessons)
     end
     lesson.update(dates: new_dates) if (lesson.reload.dates <=> new_dates) != 0
   end
@@ -252,21 +244,20 @@ end
 
 def find_exact_match(lessons, parsed_lesson)
   lessons.each do |lesson|
-    return lesson if have_exact_match(lesson, parsed_lesson)
+    return lesson if have_exact_match?(lesson, parsed_lesson)
   end
 
-  return nil
+  nil
 end
 
-def have_exact_match(lesson, parsed_lesson)
-  if (lesson.timing == parsed_lesson[:timing] &&
-      lesson.lesson_type == parsed_lesson[:lesson_type] &&
-      lesson.short_name == parsed_lesson[:short_name] &&
-      lesson.teacher == parsed_lesson[:teacher] &&
-      lesson.classroom == parsed_lesson[:classroom])
-    return true
-  end
-  return false
+def have_exact_match?(lesson, parsed_lesson, timing = nil)
+  timing ||= parsed_lesson[:timing]
+
+  lesson[:timing]      == timing &&
+  lesson[:lesson_type] == parsed_lesson[:lesson_type] &&
+  lesson[:short_name]  == parsed_lesson[:short_name] &&
+  lesson[:teacher]     == parsed_lesson[:teacher] &&
+  lesson[:classroom]   == parsed_lesson[:classroom]
 end
 
 def find_enough_match(lessons, parsed_lesson)
@@ -279,16 +270,24 @@ def find_enough_match(lessons, parsed_lesson)
     end
   end
 
-  return nil
+  nil
 end
 
-def is_absent_in_parsed_lessons(lesson, date, parsed_lessons)
+def absent_in_parsed_lessons?(lesson, date, parsed_lessons)
   parsed_lessons.each do |parsed_lesson|
     parsed_lesson[:dates].each do |parsed_date|
-      if parsed_date == date && have_exact_match(lesson, parsed_lesson)
+      if parsed_date == date && have_exact_match?(lesson, parsed_lesson)
         return false
       end
     end
   end
-  return true
+
+  true
+end
+
+def log_information(string)
+  string = "Parser | " + string
+
+  Rails.logger.info { string }
+  puts string
 end
