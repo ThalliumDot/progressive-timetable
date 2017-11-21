@@ -12,7 +12,7 @@ def parse_timetable
   faculties = find_faculties(url)
 
   faculties.each do |faculty_name, faculty_id|
-    faculty = Faculty.find_by_or_create(faculty_name)
+    faculty = Faculty.find_or_create_by(name: faculty_name)
     url_with_faculty = url + "?TimeTableForm[faculty]=#{faculty_id}"
     courses = find_courses(url_with_faculty)
 
@@ -23,7 +23,7 @@ def parse_timetable
 
       groups.each do |group_name, group_id|
         timetable_url = url_with_faculty_and_course + "&TimeTableForm[group]=#{group_id}"
-        group = faculty.groups.find_by_or_create(group_name, course_name)
+        group = faculty.groups.find_or_create_by(name: group_name, course: course_name)
         parse_group_timetable(group, timetable_url)
       end
     end
@@ -34,8 +34,8 @@ def parse_timetable
   # test timetable for group КСД-31
   #
   # timetable_url = "#{url}?TimeTableForm[faculty]=1&TimeTableForm[course]=3&TimeTableForm[group]=1071"
-  # faculty = Faculty.find_by_or_create("Факультет Інформаційних технологій")
-  # group = faculty.groups.find_by_or_create("КСД-31", 3)
+  # faculty = Faculty.find_or_create_by(name: "Факультет Інформаційних технологій")
+  # group = faculty.groups.find_or_create_by(name: "КСД-31", course: 3)
   # parse_group_timetable(group, timetable_url)
 
 
@@ -80,7 +80,7 @@ end
 
 def save_groups(faculty, groups, course_name)
   groups.each_key do |group_name|
-    faculty.groups.find_by_or_create(group_name, course_name.to_i)
+    faculty.groups.find_or_create_by(name: group_name, course: course_name.to_i)
   end
 end
 
@@ -116,11 +116,15 @@ end
 
 def find_time_intervals
   current_time = Time.now
-  after_3_months = current_time + 3.month
-  after_6_months = after_3_months + 1.day + 3.month
-  time_intervals = [
-    { from: "#{current_time.strftime("%d.%m.%Y")}", to: "#{after_3_months.strftime("%d.%m.%Y")}" },
-    { from: "#{(after_3_months + 1.day).strftime("%d.%m.%Y")}", to: "#{after_6_months.strftime("%d.%m.%Y")}" }
+  [
+    {
+      from: current_time.strftime("%d.%m.%Y"),
+      to: (current_time + 3.month).strftime("%d.%m.%Y")
+    },
+    {
+      from: (current_time + 3.month + 1.day).strftime("%d.%m.%Y"),
+      to: (current_time + 3.month + 1.day + 3.month).strftime("%d.%m.%Y")
+    }
   ]
 end
 
@@ -164,7 +168,7 @@ def make_lesson_information(type, short_name, click_information)
   if (type.nil? && short_name.nil? && click_information.blank?)
     return nil
   end
-  lesson_information = {
+  {
     lesson_type: type,
     short_name: short_name,
     long_name: click_information[0],
@@ -229,7 +233,7 @@ def compare_lessons(lessons, parsed_lessons, time_interval)
       if lesson.present?
         lesson.reject_and_update_dates(lesson.dates, parsed_lesson[:dates])
       end
-      Lesson.create_lesson(lessons, parsed_lesson)
+      lessons.create_lesson(parsed_lesson)
       next
     end
     lesson.check_and_update_dates(lesson.dates, parsed_lesson[:dates])
@@ -248,7 +252,7 @@ end
 
 def find_exact_match(lessons, parsed_lesson)
   lessons.each do |lesson|
-      return lesson if have_exact_match(lesson, parsed_lesson)
+    return lesson if have_exact_match(lesson, parsed_lesson)
   end
 
   return nil

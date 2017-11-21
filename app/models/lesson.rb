@@ -52,8 +52,8 @@ class Lesson < ApplicationRecord
     self.where(dates: []).delete_all
   end
 
-  def self.create_lesson(lessons, parsed_lesson)
-    lessons.create!(
+  def self.create_lesson(parsed_lesson)
+    self.create!(
       short_name: parsed_lesson[:short_name],
       long_name: parsed_lesson[:long_name],
       lesson_type: parsed_lesson[:lesson_type],
