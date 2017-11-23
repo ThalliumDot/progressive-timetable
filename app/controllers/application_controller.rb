@@ -9,4 +9,8 @@ class ApplicationController < ActionController::Base
       return
     end
   end
+
+  def respond_with_meta(resource, **args)
+    render json: resource, meta: { server_time: Time.zone.now.to_i }.merge(args)
+  end
 end
