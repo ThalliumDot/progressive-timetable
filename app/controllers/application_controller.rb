@@ -11,6 +11,13 @@ class ApplicationController < ActionController::Base
   end
 
   def respond_with_meta(resource, **args)
-    render json: resource, meta: { server_time: Time.zone.now.to_i }.merge(args)
+    resource_class = resource.class.name.split('::')
+    if resource_class[1] == "ActiveRecord_Relation"
+      resource = { resource_class[0].downcase.pluralize => resource }
+    else
+      resource = { resource_class[0].downcase => resource }
+    end
+
+    render json: resource.merge(meta: { server_time: Time.zone.now.to_i }.merge(args))
   end
 end
