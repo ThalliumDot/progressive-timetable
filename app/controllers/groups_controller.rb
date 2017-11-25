@@ -3,12 +3,12 @@ class GroupsController < ApplicationController
   def index
     faculties = Faculty.all
     groups = Group.all.order(course: :asc)
+
     faculties_with_courses = faculties.map do |faculty|
-      correct_groups = groups.select{ |group| group.faculty_id == faculty.id }
-      courses = get_courses(correct_groups)
+      faculty_groups = groups.select{ |group| group.faculty_id == faculty.id }
+      courses = get_courses(faculty_groups)
       faculty.attributes.merge!(courses: courses)
     end
-
     respond_with_meta({ faculties: faculties_with_courses })
   end
 
@@ -22,8 +22,8 @@ class GroupsController < ApplicationController
     courses = {}
 
     (min_course..max_course).each do |course_number|
-      course_groups = groups.select{ |group| group.course == course_number }
-      courses[course_number] = course_groups
+      groups_by_course = groups.select{ |group| group.course == course_number }
+      courses[course_number] = groups_by_course
     end
     courses
   end
