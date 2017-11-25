@@ -4,4 +4,5 @@ Rails.application.routes.draw do
   root to: 'timetables#show'
 
   resources :groups, only: [:index]
+  resources :lessons, only: [:show], param: :group_name
 end
