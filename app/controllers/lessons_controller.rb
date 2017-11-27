@@ -2,32 +2,34 @@ class LessonsController < ApplicationController
 
   def show
     group = Group.find_by(name: params[:group_name])
+    if group.blank?
+      render json: { errors: "Group #{params[:group_name]} Not Found" }, status: 404
+      return
+    end
+    lessons = group.lessons
+    is_group_by_weeks = params[:group_by_weeks] == "true"
 
     if params.key?(:from) && params.key?(:to)
-      lessons = { 'custom serialization' => 'between entered \'from\' and entered \'to\' dates' }
+      custom_serialization(lessons, is_group_by_weeks, "accept \'from\' and \'to\' params")
     elsif params.key?(:from)
-      lessons = { 'custom serialization' => 'between entered \'from\' and default \'to\' dates' }
+      custom_serialization(lessons, is_group_by_weeks, "accept only \'from\' param")
     elsif params.key?(:to)
-      lessons = { 'custom serialization' => 'between default \'from\' and entered \'to\' dates' }
+      custom_serialization(lessons, is_group_by_weeks, "accept only \'to\' param")
     elsif params.key?(:week)
       if params[:week].count == 1
-        lessons = { 'custom serialization' => "should return #{params[:week].first} week" }
+        custom_serialization(lessons, is_group_by_weeks, "accept #{params[:week].first} week")
       elsif params[:week].count == 2
-        lessons = { 'custom serialization' => "should return #{params[:week].first}-#{params[:week].last} week" }
+        custom_serialization(lessons, is_group_by_weeks, "accept #{params[:week].first}-#{params[:week].last} week")
       end
     end
-    group_by_weeks(lessons) if params[:group_by_weeks] == "1"
-
-    group_with_lessons = group.attributes.merge!(lessons: lessons)
-    respond_with_meta(group_with_lessons)
   end
 
 
   private
 
 
-  def group_by_weeks(lessons)
-    lessons['group_by_weeks'] = "should return groups array by week number"
+  def custom_serialization(lessons, is_group_by_weeks, accept_method)
+    render json: { group_by_weeks: is_group_by_weeks, custom_serialization: accept_method, lessons: lessons }
   end
 
 end
