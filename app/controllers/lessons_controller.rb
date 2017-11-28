@@ -1,6 +1,10 @@
 class LessonsController < ApplicationController
 
   def show
+    if lesson_params[:weeks].present? && lesson_params[:dates].present?
+      render json: { errors: "Forbidden, select weeks or dates" }, status: 403
+      return
+    end
     group = Group.find_by(name: params[:group_name])
     if group.blank?
       render json: { errors: "Group #{params[:group_name]} Not Found" }, status: 404
@@ -14,7 +18,7 @@ class LessonsController < ApplicationController
 
 
   def lesson_params
-    params.permit(:from, :to, :group_by_weeks, week: [])
+    params.permit(:group_by_weeks, dates: [:from, :to], weeks: [])
   end
 
 end
