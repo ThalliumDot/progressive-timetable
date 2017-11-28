@@ -13,23 +13,40 @@
             <v-card class="timetable-navbar">
               <v-card-title>
                 <v-layout row wrap>
-                  <v-flex sm3 class="pa-2">
-                    <v-select
-                      :items="faculties"
-                      v-model="faculty"
-                      label="Faculty"
-                      hide-details
-                      single-line
-                    ></v-select>
+                  <v-flex sm12>
+                    <v-flex sm6 class="pa-2">
+                      <v-select
+                        :items="faculties"
+                        v-model="faculty"
+                        label="Faculty"
+                        hide-details
+                        single-line
+                      ></v-select>
+                    </v-flex>
                   </v-flex>
-                  <v-flex sm3 class="pa-2">
-                    <v-select
-                      :items="groups"
-                      v-model="group"
-                      label="Group"
-                      hide-details
-                      single-line
-                    ></v-select>
+
+                  <v-flex sm12>
+                    <v-layout row wrap>
+                      <v-flex sm3 class="pa-2">
+                        <v-select
+                          :items="courses"
+                          v-model="course"
+                          label="Course"
+                          hide-details
+                          single-line
+                        ></v-select>
+                      </v-flex>
+
+                      <v-flex sm3 class="pa-2">
+                        <v-select
+                          :items="groups"
+                          v-model="group"
+                          label="Group"
+                          single-line
+                          autocomplete
+                        ></v-select>
+                      </v-flex>
+                    </v-layout>
                   </v-flex>
                 </v-layout>
               </v-card-title>
@@ -129,6 +146,8 @@
         groups: ["БСД-11", "БСД-12", "БСД-13", "БСД-14", "СЗД-11", "УБД-11", "БСД-21", "БСД-22", "БСД-23", "БСД-24"],
         faculty: null,
         faculties: ["Навчально-науковий інститут захисту інформації", "Факультет Інформаційних технологій", "Факультет Телекомунікацій", "Навчально-науковий інститут менеджменту та підприємництва", "Загальні", "Навчально-науковий інститут заочного та дистанційного навчання", "Навчально-науковий інститут післядипломної освіти", "ННВЦ", "Навчально-науковий інститут гуманітарних та природничих дисциплін"],
+        course: null,
+        courses: [1, 2, 3, 4, 5]
       }
     },
 
