@@ -1,8 +1,12 @@
 class LessonsController < ApplicationController
+  include Serializer
+  extend  SerializerControllerMethods
+
+  serialization only: [:show]
 
   def show
     if lesson_params[:weeks].present? && lesson_params[:dates].present?
-      render json: { errors: "Forbidden, select weeks or dates" }, status: 403
+      render json: { errors: "Invalid request: both 'weeks' and 'dates' keys detected. You must choose only onw of them" }, status: 403
       return
     end
     group = Group.find_by(name: params[:group_name])
@@ -10,7 +14,7 @@ class LessonsController < ApplicationController
       render json: { errors: "Group #{params[:group_name]} Not Found" }, status: 404
       return
     end
-    lessons = group.lessons
+    render json: group.lessons
   end
 
 
