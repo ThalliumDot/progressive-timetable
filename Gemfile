@@ -17,6 +17,7 @@ gem 'annotate', require: false
 gem 'material_icons'
 
 gem 'nokogiri', '~> 1.8.1'
+gem 'dotenv-rails'
 
 # See https://github.com/rails/execjs#readme for more supported runtimes
 # gem 'therubyracer', platforms: :ruby
