@@ -1,12 +1,9 @@
 class BugReportsController < ApplicationController
   # to resolve error: ActionController::InvalidAuthenticityToken
-  #skip_before_action :verify_authenticity_token
+  # skip_before_action :verify_authenticity_token
 
   def create
-    if ENV['ACCEPT_BUG_REPORTS'] == 'false'
-      render head :forbidden
-      return
-    end
+    return head 403 if ENV['ACCEPT_BUG_REPORTS'] == 'false'
 
     bug_report = BugReport.new(report_params)
     if bug_report.save

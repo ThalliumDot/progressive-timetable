@@ -18,6 +18,7 @@ gem 'material_icons'
 
 gem 'nokogiri', '~> 1.8.1'
 gem 'dotenv-rails'
+gem 'enum_attributes_validation'
 
 # See https://github.com/rails/execjs#readme for more supported runtimes
 # gem 'therubyracer', platforms: :ruby
