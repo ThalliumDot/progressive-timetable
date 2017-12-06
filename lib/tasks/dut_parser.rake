@@ -1,8 +1,10 @@
 require 'open-uri'
+require 'optparse'
 
 namespace :parse do
-  desc ">> Parse timetable from http://e-rozklad.dut.edu.ua/"
+  desc ">> Parse timetable from http://e-rozklad.dut.edu.ua/, [-h, --help] - show usage, [-s, --semester-beginning] - allow start parsing from semester beginning"
   task dut: :environment do
+    options = get_options
     url = "http://e-rozklad.dut.edu.ua/timeTable/group"
     faculties = find_faculties(url)
 
@@ -21,7 +23,7 @@ namespace :parse do
 
           timetable_url = url_with_faculty_and_course + "&TimeTableForm[group]=#{group_id}"
           group = faculty.groups.find_or_create_by(name: group_name, course: course_name)
-          parse_group_timetable(group, timetable_url)
+          parse_group_timetable(group, timetable_url, options)
         end
       end
     end
@@ -32,10 +34,32 @@ namespace :parse do
     # timetable_url = "#{url}?TimeTableForm[faculty]=1&TimeTableForm[course]=3&TimeTableForm[group]=1071"
     # faculty = Faculty.find_or_create_by(name: "Факультет Інформаційних технологій")
     # group = faculty.groups.find_or_create_by(name: "КСД-31", course: 3)
-    # parse_group_timetable(group, timetable_url)
+    # parse_group_timetable(group, timetable_url, options)
   end
 end
 
+def get_options
+  current_time = Time.zone.now
+  year = current_time.year
+  options = { start_parsing_date: current_time }
+  start_first_semester = Time.zone.parse("1.09.#{year}")
+  start_second_semester = Time.zone.parse("1.01.#{year}")
+
+  opts = OptionParser.new
+  opts.banner = 'Usage: rake parse:dut [options]'
+  opts.on('-s', '--semester-beginning', 'Start parsing with semester beginnig') do
+    if start_first_semester.past?
+      options[:start_parsing_date] = start_first_semester
+    else
+      options[:start_parsing_date] = start_second_semester
+    end
+  end
+
+  # return ARGV with the intended arguments
+  args = opts.order!(ARGV) {}
+  opts.parse!(args)
+  options
+end
 
 def find_faculties(url)
   html = Nokogiri::HTML(open(url))
@@ -78,8 +102,8 @@ def save_groups(faculty, groups, course_name)
   end
 end
 
-def parse_group_timetable(group, timetable_url)
-  time_intervals = find_time_intervals
+def parse_group_timetable(group, timetable_url, options)
+  time_intervals = find_time_intervals(options)
   time_intervals.each do |time_interval|
     timetable = {}
     timetable_url += "&TimeTableForm[date1]=#{time_interval[:from]}&TimeTableForm[date2]=#{time_interval[:to]}"
@@ -108,17 +132,17 @@ def parse_group_timetable(group, timetable_url)
   end
 end
 
-def find_time_intervals
-  current_time = Time.now
+def find_time_intervals(options)
+  start_parsing_date = options[:start_parsing_date]
 
   [
     {
-      from: current_time.strftime("%d.%m.%Y"),
-      to:   (current_time + 3.month).strftime("%d.%m.%Y")
+      from: start_parsing_date.strftime("%d.%m.%Y"),
+      to:   (start_parsing_date + 3.month).strftime("%d.%m.%Y")
     },
     {
-      from: (current_time + 3.month + 1.day).strftime("%d.%m.%Y"),
-      to:   (current_time + 6.month + 1.day).strftime("%d.%m.%Y")
+      from: (start_parsing_date + 3.month + 1.day).strftime("%d.%m.%Y"),
+      to:   (start_parsing_date + 6.month + 1.day).strftime("%d.%m.%Y")
     }
   ]
 end
