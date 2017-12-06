@@ -2,6 +2,10 @@ require 'open-uri'
 require 'optparse'
 
 namespace :parse do
+  # Recomended usage:
+  #   rake parse:dut -- --semester-beginning
+  #   rake parse:dut -- -h
+  # without '--' in a middle is possible incorrect work
   desc ">> Parse timetable from http://e-rozklad.dut.edu.ua/, [-h, --help] - show usage, [-s, --semester-beginning] - allow start parsing from semester beginning"
   task dut: :environment do
     options = get_options
