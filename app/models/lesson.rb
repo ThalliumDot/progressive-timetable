@@ -51,7 +51,7 @@ class Lesson < ApplicationRecord
 
 
   def delete_empty_dates
-    self.destroy if dates.length == 0
+    self.delete if dates.length == 0
   end
 
   def reject_and_update_dates(lesson_dates, parsed_dates)
