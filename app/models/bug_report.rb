@@ -13,8 +13,10 @@
 #
 
 class BugReport < ApplicationRecord
+
+  validates :browser, :device, :presence => true
+  validate_enum_attributes :device
+
   enum device: [:mobile, :tablet, :pc]
 
-	validates :browser, :device, :presence => true
-  validate_enum_attributes :device
 end
