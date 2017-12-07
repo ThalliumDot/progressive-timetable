@@ -2,10 +2,6 @@ require 'open-uri'
 require 'optparse'
 
 namespace :parse do
-  # Recomended usage:
-  #   rake parse:dut -- --semester-beginning
-  #   rake parse:dut -- -h
-  # without '--' in a middle is possible incorrect work
   desc ">> Parse timetable from http://e-rozklad.dut.edu.ua/, [-h, --help] - show usage, [-s, --semester-beginning] - allow start parsing from semester beginning"
   task dut: :environment do
     options = get_options
@@ -45,13 +41,11 @@ end
 def get_options
   current_time = Time.zone.now
   year = current_time.year
-  options = { start_parsing_date: current_time }
   start_first_semester = Time.zone.parse("1.09.#{year}")
   start_second_semester = Time.zone.parse("1.01.#{year}")
+  options = { start_parsing_date: current_time }
 
-  opts = OptionParser.new
-  opts.banner = 'Usage: rake parse:dut [options]'
-  opts.on('-s', '--semester-beginning', 'Start parsing with semester beginnig') do
+  if ARGV[1] == 'semester_beginning'
     if start_first_semester.past?
       options[:start_parsing_date] = start_first_semester
     else
@@ -59,9 +53,6 @@ def get_options
     end
   end
 
-  # return ARGV with the intended arguments
-  args = opts.order!(ARGV) {}
-  opts.parse!(args)
   options
 end
 
@@ -282,17 +273,17 @@ def have_exact_match?(lesson, parsed_lesson, timing = nil)
   timing ||= parsed_lesson[:timing]
 
   lesson[:timing]      == timing &&
-  lesson[:lesson_type] == parsed_lesson[:lesson_type] &&
-  lesson[:short_name]  == parsed_lesson[:short_name] &&
-  lesson[:teacher]     == parsed_lesson[:teacher] &&
-  lesson[:classroom]   == parsed_lesson[:classroom]
+    lesson[:lesson_type] == parsed_lesson[:lesson_type] &&
+    lesson[:short_name]  == parsed_lesson[:short_name] &&
+    lesson[:teacher]     == parsed_lesson[:teacher] &&
+    lesson[:classroom]   == parsed_lesson[:classroom]
 end
 
 def find_enough_match(lessons, parsed_lesson)
   lessons.each do |lesson|
     if (lesson.lesson_type == parsed_lesson[:lesson_type] &&
-        lesson.short_name == parsed_lesson[:short_name]) &&
-        (lesson.timing == parsed_lesson[:timing] ||
+      lesson.short_name == parsed_lesson[:short_name]) &&
+      (lesson.timing == parsed_lesson[:timing] ||
         (lesson.dates <=> parsed_lesson[:dates]) == 0)
       return lesson
     end
