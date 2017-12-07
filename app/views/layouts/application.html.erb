@@ -11,6 +11,11 @@
 
     <%= javascript_pack_tag 'application' %>
     <%= stylesheet_pack_tag 'application' %>
+    <script>
+      window.env = {
+        acceptBugReports: <%= ENV['ACCEPT_BUG_REPORTS'] %>
+      };
+    </script>
   </head>
 
   <body>

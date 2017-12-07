@@ -5,4 +5,13 @@ Rails.application.routes.draw do
 
   resources :groups, only: [:index]
   resources :lessons, only: [:show], param: :group_name
+  resources :bug_reports, only: [:create]
+
+  namespace :api do
+    namespace :v1 do
+      resources :groups, only: [:index]
+      resources :lessons, only: [:show], param: :group_name
+    end
+  end
+
 end

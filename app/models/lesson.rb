@@ -8,8 +8,8 @@
 #  lesson_type :string
 #  teacher     :string
 #  dates       :integer          default([]), is an Array
-#  timing      :jsonb
-#  group_id    :integer
+#  timing      :string
+#  group_id    :integer          not null
 #  classroom   :string
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
