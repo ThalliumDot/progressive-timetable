@@ -1,6 +1,6 @@
 # == Schema Information
 #
-# Table name: lessons
+# Table name: parsed_lessons
 #
 #  id          :integer          not null, primary key
 #  short_name  :string
@@ -15,7 +15,7 @@
 #  updated_at  :datetime         not null
 #
 
-class Lesson < ApplicationRecord
+class ParsedLesson < ApplicationRecord
 
   # should live (in future) in Rails config or somewhere...
   LESSONS = {
