@@ -1,5 +1,5 @@
 class LessonsController < ApplicationController
-  include Serializer
+  include Callback
   extend  SerializerControllerMethods
 
   serialization only: [:show]

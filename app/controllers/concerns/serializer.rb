@@ -1,4 +1,4 @@
-module Serializer
+module Callback
   extend ActiveSupport::Concern
 
   included do
@@ -10,7 +10,7 @@ module Serializer
     # TODO: SerializerControllerMethods.allowed_actions
 
     if args.include?(:json)
-      args[:json] = BaseSerializer.new(args[:json]).serialize
+      args[:json] = SerializableResource.new(args[:json]).serialize
     end
 
     # TODO: super action

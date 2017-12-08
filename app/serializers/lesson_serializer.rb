@@ -1,4 +1,8 @@
-class LessonSerializer < BaseSerializer
+require 'base/serializer'
+
+class LessonSerializer < Serializer
+  attributes :name
+
   before_collection :group
 
   def group
