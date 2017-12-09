@@ -48,6 +48,8 @@ class ParsedLesson < ApplicationRecord
   after_commit :delete_empty_dates
 
   belongs_to :group
+  belongs_to :lesson
+  belongs_to :teacher
 
 
   def self.for_period(period_start, period_end)
