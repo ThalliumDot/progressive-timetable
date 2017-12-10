@@ -53,27 +53,31 @@ class SerializableResource
       end
     end
 
-    if is_collection
-      serializer.collection.map do |ser_res|
-        child_serializer = serializer_class.new(:object, ser_res)
+    SerializableObjectDecorator.each_of(resource_hash) do |ser_res|
+      child_serializer = serializer_class.new(:object, ser_res)
 
-        if child_serializer._before_resource.present?
-          child_serializer._before_collection.each do |method|
-            child_serializer.send(method)
-          end
+      if child_serializer._before_resource.present?
+        child_serializer._before_resource.each do |method|
+          child_serializer.send(method)
         end
+      end
 
-        child_serializer._attributes.each do |attr|
-          child_serializer.object.try(:attr)
+      resource_hash = {}
+
+      child_serializer._attributes.each do |attr|
+        if child_serializer.try(attr)
+          resource_hash[attr] = child_serializer.try(attr)
+        else
+          resource_hash[attr] = child_serializer.object.try(attr)
         end
+      end
 
-        if child_serializer._after_resource.present?
-          child_serializer._after_resource.each do |method|
-            child_serializer.send(method)
-          end
+      child_serializer.object.replace_with_hash(resource_hash)
+
+      if child_serializer._after_resource.present?
+        child_serializer._after_resource.each do |method|
+          child_serializer.send(method)
         end
-
-        child_serializer
       end
     end
 
@@ -82,6 +86,8 @@ class SerializableResource
         serializer.send(method)
       end
     end
+
+    self.serializable_resource = serializer
 
     self
   end

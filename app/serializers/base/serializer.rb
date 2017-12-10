@@ -24,6 +24,6 @@ class Serializer
 
   def initialize(type, resource)
     instance_variable_set("@#{type}", resource)
-    self.class.send(:attr_reader, type)
+    self.class.send(:attr_accessor, type)
   end
 end
