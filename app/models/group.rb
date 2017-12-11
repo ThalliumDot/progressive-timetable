@@ -13,6 +13,6 @@
 class Group < ApplicationRecord
 
   belongs_to :faculty
-  has_many   :parsed_lessons
+  has_many   :planned_lesson
 
 end

@@ -1,21 +1,20 @@
 # == Schema Information
 #
-# Table name: parsed_lessons
+# Table name: planned_lessons
 #
 #  id          :integer          not null, primary key
-#  short_name  :string
-#  long_name   :string
 #  lesson_type :string
-#  teacher     :string
 #  dates       :integer          default([]), is an Array
 #  timing      :string
 #  group_id    :integer          not null
 #  classroom   :string
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
+#  lesson_id   :integer          not null
+#  teacher_id  :integer          not null
 #
 
-class ParsedLesson < ApplicationRecord
+class PlannedLesson < ApplicationRecord
 
   # should live (in future) in Rails config or somewhere...
   LESSONS = {
