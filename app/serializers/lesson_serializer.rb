@@ -6,6 +6,7 @@ class LessonSerializer < Serializer
   before_collection :group
 
   def group
+    binding.pry
     grouped = {}
 
     collection.each do |lesson|

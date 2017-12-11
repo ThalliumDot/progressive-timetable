@@ -1,19 +1,21 @@
-module Callback
+module SerializerCallback
   extend ActiveSupport::Concern
 
   included do
     # make our module included before ActionController to define render
-    ActionController.prepend(Serializer)
+    ActionController.prepend(SerializerCallback)
   end
 
   def render(**args)
     # TODO: SerializerControllerMethods.allowed_actions
 
     if args.include?(:json)
-      args[:json] = SerializableResource.new(args[:json]).serialize
+      sr = SerializableResource.new(args[:json], params)
+      if sr.have_serializer?
+        args[:json] = sr.serialize.as_json
+      end
     end
 
-    # TODO: super action
-    # binding.pry
+    super(args)
   end
 end

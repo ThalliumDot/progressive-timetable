@@ -7,16 +7,14 @@ class SerializableResource
 
   # internal
   attr_accessor :serializable_resource
-  attr_reader   :resource_hash, :key, :klass, :is_collection
-  # external
-  attr_reader   :collection_callbacks, :resource_callbacks
+  attr_reader   :resource_hash, :key, :klass, :is_collection, :params
 
 
-  def initialize(resource)
+  def initialize(resource, params = nil)
     @resource_hash = SecureRandom.hex(10)
     @is_collection = false
-    @collection_callbacks = []
-    @resource_callbacks = []
+    @klass = nil
+    @params = params
 
     if resource.respond_to?(:each)
       # then it is a multiple resources
@@ -39,46 +37,24 @@ class SerializableResource
 
 
   def serialize
+    unless have_serializer?
+      return
+    end
+
     serializer_class = "#{klass}Serializer".constantize
 
     if is_collection
-      serializer = serializer_class.new(:collection, serializable_resource)
-    else
-      serializer = serializer_class.new(:object, serializable_resource)
-    end
+      serializer = serializer_class.new(:collection, serializable_resource, params)
 
-    if is_collection && serializer._before_collection.present?
-      serializer._before_collection.each do |method|
-        serializer.send(method)
+      if serializer._before_collection.present?
+        serializer._before_collection.each do |method|
+          serializer.send(method)
+        end
       end
     end
 
     SerializableObjectDecorator.each_of(resource_hash) do |ser_res|
-      child_serializer = serializer_class.new(:object, ser_res)
-
-      if child_serializer._before_resource.present?
-        child_serializer._before_resource.each do |method|
-          child_serializer.send(method)
-        end
-      end
-
-      resource_hash = {}
-
-      child_serializer._attributes.each do |attr|
-        if child_serializer.try(attr)
-          resource_hash[attr] = child_serializer.try(attr)
-        else
-          resource_hash[attr] = child_serializer.object.try(attr)
-        end
-      end
-
-      child_serializer.object.replace_with_hash(resource_hash)
-
-      if child_serializer._after_resource.present?
-        child_serializer._after_resource.each do |method|
-          child_serializer.send(method)
-        end
-      end
+      instance_serialization(ser_res)
     end
 
     if is_collection && serializer._after_collection.present?
@@ -92,6 +68,33 @@ class SerializableResource
     self
   end
 
+  def instance_serialization(resource)
+    instance_serializer = "#{klass}Serializer".constantize.new(:object, resource, params)
+
+    if instance_serializer._before_resource.present?
+      instance_serializer._before_resource.each do |method|
+        instance_serializer.send(method)
+      end
+    end
+
+    resource_hash = {}
+
+    instance_serializer._attributes.each do |attr|
+      if instance_serializer.try(attr)
+        resource_hash[attr] = instance_serializer.try(attr)
+      else
+        resource_hash[attr] = instance_serializer.object.try(attr)
+      end
+    end
+
+    instance_serializer.object.replace_with_hash(resource_hash)
+
+    if instance_serializer._after_resource.present?
+      instance_serializer._after_resource.each do |method|
+        instance_serializer.send(method)
+      end
+    end
+  end
 
   def get_single_resource_class(resource)
     if ActiveRecord::Base.descendants.map(&:name).include?(resource.class.name)
@@ -112,5 +115,21 @@ class SerializableResource
     if resource.first.class.name == resource_ancestors.first
       return resource.first.class.name
     end
+  end
+
+  def as_json
+    serializable_resource.as_json
+  end
+
+  # def serializer
+  #   "#{klass}Serializer"
+  # end
+
+  def have_serializer?
+    return false unless klass.present?
+    eval("#{klass}Serializer")
+    true
+  rescue NameError;
+    return false
   end
 end

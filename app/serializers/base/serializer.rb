@@ -2,6 +2,7 @@ include ActiveSupport::Configurable
 
 class Serializer
 
+  attr_accessor :params
   class_attribute :_attributes
 
   def self.attributes(*attrs)
@@ -22,8 +23,10 @@ class Serializer
     end
   end
 
-  def initialize(type, resource)
+  def initialize(type, resource, params)
     instance_variable_set("@#{type}", resource)
     self.class.send(:attr_accessor, type)
+
+    @params = params
   end
 end

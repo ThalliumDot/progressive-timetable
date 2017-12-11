@@ -50,6 +50,15 @@ class Lesson < ApplicationRecord
   belongs_to :group
 
 
+  def self.for_period(period_start, period_end)
+    times = (period_start..period_end).step(1.day).to_a
+    where('dates && ?::int[]', "{#{times.join(',')}}")
+  end
+
+  def self.for_group_and_period(group_name, period_start, period_end)
+    joins(:group).where('groups.name = ?', group_name).for_period(period_start, period_end)
+  end
+
   def delete_empty_dates
     self.delete if dates.length == 0
   end
