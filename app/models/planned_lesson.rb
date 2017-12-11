@@ -50,6 +50,7 @@ class PlannedLesson < ApplicationRecord
   belongs_to :lesson
   belongs_to :teacher
 
+  delegate :short_name, :long_name, to: :lesson
 
   def self.for_period(period_start, period_end)
     times = (period_start..period_end).step(1.day).to_a
