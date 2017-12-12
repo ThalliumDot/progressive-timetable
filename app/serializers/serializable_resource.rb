@@ -53,8 +53,14 @@ class SerializableResource
       end
     end
 
-    SerializableObjectDecorator.each_of(resource_hash) do |ser_res|
-      instance_serialization(ser_res)
+    if is_collection
+      SerializableObjectDecorator.each_of(resource_hash) do |ser_res|
+        instance_serialization(ser_res)
+      end
+    else
+      SerializableObjectDecorator.each_of(resource_hash) do |ser_res|
+        serializer = instance_serialization(ser_res)
+      end
     end
 
     if is_collection && serializer._after_collection.present?
@@ -94,6 +100,8 @@ class SerializableResource
         instance_serializer.send(method)
       end
     end
+
+    instance_serializer
   end
 
   def get_single_resource_class(resource)
