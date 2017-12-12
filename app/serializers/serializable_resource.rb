@@ -118,7 +118,15 @@ class SerializableResource
   end
 
   def as_json
-    serializable_resource.as_json
+    hash = { key => serializable_resource.get_resource }
+
+    if serializable_resource._respond_with.present?
+      serializable_resource._respond_with.each do |method|
+        hash.merge!({ method => serializable_resource.send(method) })
+      end
+    end
+
+    hash.as_json
   end
 
   # def serializer

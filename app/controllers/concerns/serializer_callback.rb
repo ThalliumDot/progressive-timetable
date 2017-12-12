@@ -8,11 +8,17 @@ module SerializerCallback
 
   def render(**args)
     # TODO: SerializerControllerMethods.allowed_actions
-
-    if args.include?(:json)
+    if args.keys.include?(:json)
       sr = SerializableResource.new(args[:json], params)
       if sr.have_serializer?
-        args[:json] = sr.serialize.as_json
+        to_render = {}
+        to_render[:json] = sr.serialize.as_json
+
+        if args.keys.include?(:meta)
+          to_render[:json].merge!({ meta: args[:meta] })
+        end
+
+        args = to_render
       end
     end
 

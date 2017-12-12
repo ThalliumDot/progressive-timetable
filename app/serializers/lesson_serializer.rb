@@ -5,8 +5,9 @@ class LessonSerializer < Serializer
 
   before_collection :group
 
+  respond_with :meta
+
   def group
-    binding.pry
     grouped = {}
 
     collection.each do |lesson|
@@ -20,5 +21,11 @@ class LessonSerializer < Serializer
     end
 
     self.collection = grouped
+  end
+
+  def meta
+    {
+      server_time: Time.zone.now.to_i
+    }
   end
 end
