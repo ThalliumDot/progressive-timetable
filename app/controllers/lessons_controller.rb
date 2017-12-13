@@ -1,16 +1,20 @@
 class LessonsController < ApplicationController
+  include SerializerCallback
+  extend  SerializerControllerMethods
+
+  serialization only: [:show]
 
   def show
     if lesson_params[:weeks].present? && lesson_params[:dates].present?
-      render json: { errors: "Forbidden, select weeks or dates" }, status: 403
+      render json: { errors: "Invalid request: both 'weeks' and 'dates' keys detected. You must choose only one of them" }, status: 403
       return
     end
-    group = Group.find_by(name: params[:group_name])
-    if group.blank?
-      render json: { errors: "Group #{params[:group_name]} Not Found" }, status: 404
-      return
-    end
-    lessons = group.lessons
+
+    time_start, time_end = get_timings_from_request
+
+    lessons = Lesson.for_group_and_period(params[:group_name], time_start, time_end)
+
+    render json: lessons
   end
 
 
@@ -18,7 +22,18 @@ class LessonsController < ApplicationController
 
 
   def lesson_params
-    params.permit(:group_by_weeks, dates: [:from, :to], weeks: [])
+    params.permit(:group_name, :group_by_weeks, dates: [:from, :to], weeks: [])
+  end
+
+  def get_timings_from_request
+    if lesson_params[:dates]
+      [lesson_params[:dates][:from], lesson_params[:dates][:to]]
+    else
+      [
+        TimeHelper.ws(lesson_params[:weeks].first).to_i,
+        TimeHelper.we(lesson_params[:weeks].last).to_i
+      ]
+    end
   end
 
 end
