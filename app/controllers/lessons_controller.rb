@@ -10,9 +10,9 @@ class LessonsController < ApplicationController
       return
     end
 
-    lessons = Lesson.for_group_and_period(params[:group_name],
-                                          lesson_params[:dates][:from],
-                                          lesson_params[:dates][:to])
+    time_start, time_end = get_timings_from_request
+
+    lessons = Lesson.for_group_and_period(params[:group_name], time_start, time_end)
 
     render json: lessons
   end
@@ -22,7 +22,18 @@ class LessonsController < ApplicationController
 
 
   def lesson_params
-    params.permit(:group_by_weeks, dates: [:from, :to], weeks: [])
+    params.permit(:group_name, :group_by_weeks, dates: [:from, :to], weeks: [])
+  end
+
+  def get_timings_from_request
+    if lesson_params[:dates]
+      [lesson_params[:dates][:from], lesson_params[:dates][:to]]
+    else
+      [
+        TimeHelper.ws(lesson_params[:weeks].first).to_i,
+        TimeHelper.we(lesson_params[:weeks].last).to_i
+      ]
+    end
   end
 
 end
