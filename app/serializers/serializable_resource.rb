@@ -117,7 +117,7 @@ class SerializableResource
   def get_collection_class(resource)
     return nil unless resource.first
 
-    resource_ancestors = resource.ancestors.map(&:name)
+    resource_ancestors = resource.class.ancestors.map(&:name)
     return nil unless resource_ancestors.include?('ActiveRecord::Base')
 
     if resource.first.class.name == resource_ancestors.first
