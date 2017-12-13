@@ -1,5 +1,9 @@
-class TimeHelper
+module TimeHelper
   class << self
+
+    def at(unix_time)
+      Time.zone.at(unix_time)
+    end
 
     def current_time
       Time.zone.now
@@ -14,13 +18,13 @@ class TimeHelper
 
 
     def week_start(week, year = Time.zone.now.year)
-      Date.commercial(year, week, 1)
+      Date.commercial(year, week.to_i, 1).to_time
     end
     alias_method :ws, :week_start
 
 
     def week_end(week, year = Time.zone.now.year)
-      Date.commercial(year, week, 7)
+      Date.commercial(year, week.to_i, 7).to_time
     end
     alias_method :we, :week_end
 
