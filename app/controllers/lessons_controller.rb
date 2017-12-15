@@ -27,7 +27,7 @@ class LessonsController < ApplicationController
 
   def get_timings_from_request
     if lesson_params[:dates]
-      [lesson_params[:dates][:from], lesson_params[:dates][:to]]
+      [lesson_params[:dates][:from].to_i, lesson_params[:dates][:to].to_i]
     else
       [
         TimeHelper.ws(lesson_params[:weeks].first).to_i,
