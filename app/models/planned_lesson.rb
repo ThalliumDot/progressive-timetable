@@ -61,6 +61,23 @@ class PlannedLesson < ApplicationRecord
     joins(:group).where('groups.name = ?', group_name).for_period(period_start, period_end)
   end
 
+  def self.create_with_linked(parsed_lesson)
+    lesson = Lesson.find_or_create_by(
+      short_name: parsed_lesson[:short_name],
+      long_name: parsed_lesson[:long_name]
+    )
+    last_name, first_name, middle_name = parsed_lesson[:teacher].strip.split(/\s+/)
+    teacher = Teacher.find_or_create_by(
+      first_name: first_name,
+      last_name: last_name,
+      middle_name: middle_name
+    )
+    self.create(parsed_lesson.except(:short_name, :long_name, :teacher)) do |planned_lesson|
+      planned_lesson.lesson_id = lesson.id
+      planned_lesson.teacher_id = teacher.id
+    end
+  end
+
   def delete_empty_dates
     self.delete if dates.length == 0
   end
@@ -79,4 +96,5 @@ class PlannedLesson < ApplicationRecord
       self.update(dates: new_dates)
     end
   end
+
 end

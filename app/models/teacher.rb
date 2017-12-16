@@ -12,7 +12,7 @@
 #
 
 class Teacher < ApplicationRecord
-  has_many :planned_lesson
+  has_many :planned_lessons
 
   def full_name
     return "#{self.last_name} #{self.first_name} #{self.middle_name}"

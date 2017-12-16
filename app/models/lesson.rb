@@ -10,5 +10,5 @@
 #
 
 class Lesson < ApplicationRecord
-  has_many :planned_lesson
+  has_many :planned_lessons
 end

@@ -4,6 +4,7 @@ require 'optparse'
 namespace :parse do
   desc ">> Parse timetable from http://e-rozklad.dut.edu.ua/, [-h, --help] - show usage, [-s, --semester-beginning] - allow start parsing from semester beginning"
   task dut: :environment do
+    ARGV.each { |a| task a.to_sym do ; end }
     options = get_options
     url = "http://e-rozklad.dut.edu.ua/timeTable/group"
     faculties = find_faculties(url)
@@ -39,10 +40,10 @@ namespace :parse do
 end
 
 def get_options
-  current_time = Time.zone.now
+  current_time = TimeHelper.c
   year = current_time.year
-  start_first_semester = Time.zone.parse("1.09.#{year}")
-  start_second_semester = Time.zone.parse("1.01.#{year}")
+  start_first_semester = TimeHelper.p("1.09.#{year}")
+  start_second_semester = TimeHelper.p("1.01.#{year}")
   options = { start_parsing_date: current_time }
 
   if ARGV[1] == 'semester_beginning'
@@ -122,8 +123,8 @@ def parse_group_timetable(group, timetable_url, options)
     parsed_lessons = rebuild_timetable(timetable)
     next if parsed_lessons.blank?
 
-    lessons = group.lessons
-    compare_lessons(lessons, parsed_lessons, time_interval, group.id)
+    planned_lessons = group.planned_lessons
+    compare_lessons(planned_lessons, parsed_lessons, time_interval, group.id)
   end
 end
 
@@ -198,7 +199,7 @@ def rebuild_timetable(timetable)
 
   timetable.each_value do |dates|
     dates.each do |date, timings|
-      date = unix_time(date)
+      date = TimeHelper.p(date).to_i
       timings.each do |timing, lesson_information|
         next if (lesson_information.nil?)
         index = check_parsed_lessons(parsed_lessons, lesson_information, timing)
@@ -216,18 +217,24 @@ def rebuild_timetable(timetable)
   parsed_lessons
 end
 
-def unix_time(date)
-  Time.zone.parse(date).to_i
-end
-
 def check_parsed_lessons(parsed_lessons, lesson_information, timing)
   parsed_lessons.each_with_index do |lesson, index|
-    if have_exact_match?(lesson, lesson_information, timing)
+    if have_match?(lesson, lesson_information, timing)
       return index
     end
   end
 
   nil
+end
+
+def have_match?(lesson, parsed_lesson, timing = nil)
+  timing ||= parsed_lesson[:timing]
+
+  lesson[:timing]      == timing &&
+  lesson[:lesson_type] == parsed_lesson[:lesson_type] &&
+  lesson[:short_name]  == parsed_lesson[:short_name] &&
+  lesson[:teacher]     == parsed_lesson[:teacher] &&
+  lesson[:classroom]   == parsed_lesson[:classroom]
 end
 
 def new_lesson(lesson_information, timing, date)
@@ -236,66 +243,74 @@ def new_lesson(lesson_information, timing, date)
   new_lesson
 end
 
-def compare_lessons(lessons, parsed_lessons, time_interval, group_id)
+def compare_lessons(planned_lessons, parsed_lessons, time_interval, group_id)
   parsed_lessons.each do |parsed_lesson|
-    lesson = find_exact_match(lessons, parsed_lesson)
-    if lesson.blank?
-      lesson = find_enough_match(lessons, parsed_lesson)
-      if lesson.present?
-        lesson.reject_and_update_dates(lesson.dates, parsed_lesson[:dates])
+    planned_lesson = find_exact_match(planned_lessons, parsed_lesson)
+    if planned_lesson.blank?
+      planned_lesson = find_enough_match(planned_lessons, parsed_lesson)
+      if planned_lesson.present?
+        planned_lesson.reject_and_update_dates(planned_lesson.dates, parsed_lesson[:dates])
       end
-      Lesson.create(parsed_lesson.except(:other).merge(group_id: group_id))
+      PlannedLesson.create_with_linked(parsed_lesson.except(:other).merge(group_id: group_id))
       next
     end
-    lesson.check_and_update_dates(lesson.dates, parsed_lesson[:dates])
+    planned_lesson.check_and_update_dates(planned_lesson.dates, parsed_lesson[:dates])
   end
 
-  lessons.reload
-  lessons.each do |lesson|
-    new_dates = lesson.dates
+  planned_lessons.reload
+  planned_lessons.each do |planned_lesson|
+    new_dates = planned_lesson.dates
     new_dates.reject! do |date|
-      next if date < unix_time(time_interval[:from]) || date > unix_time(time_interval[:to])
-      absent_in_parsed_lessons?(lesson, date, parsed_lessons)
+      next if date_out_of_interval?(date, time_interval)
+      absent_in_parsed_lessons?(planned_lesson, date, parsed_lessons)
     end
-    lesson.update(dates: new_dates) if (lesson.reload.dates <=> new_dates) != 0
+    planned_lesson.update(dates: new_dates) if (planned_lesson.reload.dates <=> new_dates) != 0
   end
 end
 
-def find_exact_match(lessons, parsed_lesson)
-  lessons.each do |lesson|
-    return lesson if have_exact_match?(lesson, parsed_lesson)
+def date_out_of_interval?(date, time_interval)
+  date < TimeHelper.p(time_interval[:from]).to_i || date > TimeHelper.p(time_interval[:to]).to_i
+end
+
+def find_exact_match(planned_lessons, parsed_lesson)
+  planned_lessons.each do |planned_lesson|
+    return planned_lesson if have_exact_match?(planned_lesson, parsed_lesson)
   end
 
   nil
 end
 
-def have_exact_match?(lesson, parsed_lesson, timing = nil)
-  timing ||= parsed_lesson[:timing]
-
-  lesson[:timing]      == timing &&
-    lesson[:lesson_type] == parsed_lesson[:lesson_type] &&
-    lesson[:short_name]  == parsed_lesson[:short_name] &&
-    lesson[:teacher]     == parsed_lesson[:teacher] &&
-    lesson[:classroom]   == parsed_lesson[:classroom]
+def have_exact_match?(planned_lesson, parsed_lesson)
+  planned_lesson.timing             == parsed_lesson[:timing] &&
+  planned_lesson.lesson_type        == parsed_lesson[:lesson_type] &&
+  planned_lesson.short_name         == parsed_lesson[:short_name] &&
+  planned_lesson.teacher.full_name  == parsed_lesson[:teacher] &&
+  planned_lesson.classroom          == parsed_lesson[:classroom]
 end
 
-def find_enough_match(lessons, parsed_lesson)
-  lessons.each do |lesson|
-    if (lesson.lesson_type == parsed_lesson[:lesson_type] &&
-      lesson.short_name == parsed_lesson[:short_name]) &&
-      (lesson.timing == parsed_lesson[:timing] ||
-        (lesson.dates <=> parsed_lesson[:dates]) == 0)
-      return lesson
-    end
+def find_enough_match(planned_lessons, parsed_lesson)
+  planned_lessons.each do |planned_lesson|
+    return planned_lesson if have_enough_match?(planned_lesson, parsed_lesson)
   end
 
   nil
 end
 
-def absent_in_parsed_lessons?(lesson, date, parsed_lessons)
+def have_enough_match?(planned_lesson, parsed_lesson)
+  (
+    planned_lesson.lesson_type == parsed_lesson[:lesson_type] &&
+    planned_lesson.short_name  == parsed_lesson[:short_name]
+  ) &&
+  (
+    planned_lesson.timing  == parsed_lesson[:timing] ||
+    (planned_lesson.dates <=> parsed_lesson[:dates]) == 0
+  )
+end
+
+def absent_in_parsed_lessons?(planned_lesson, date, parsed_lessons)
   parsed_lessons.each do |parsed_lesson|
     parsed_lesson[:dates].each do |parsed_date|
-      if parsed_date == date && have_exact_match?(lesson, parsed_lesson)
+      if parsed_date == date && have_exact_match?(planned_lesson, parsed_lesson)
         return false
       end
     end
