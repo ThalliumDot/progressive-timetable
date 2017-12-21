@@ -11,6 +11,7 @@ class FacultySerializer < Serializer
   end
 
   def get_courses(groups)
+    return [] if groups.blank?
     min_course = 1
     max_course = groups.maximum('course')
     courses = {}

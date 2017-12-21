@@ -84,7 +84,7 @@ class PlannedLesson < ApplicationRecord
 
   def reject_and_update_dates(lesson_dates, parsed_dates)
     dates = lesson_dates.reject{ |date| parsed_dates.include?(date) }
-    self.update(dates: dates)
+    self.update(dates: dates) unless destroyed?
   end
 
   def check_and_update_dates(lesson_dates, parsed_dates)
@@ -93,7 +93,7 @@ class PlannedLesson < ApplicationRecord
       parsed_dates.each do |parsed_date|
         new_dates << parsed_date if lesson_dates.exclude?(parsed_date)
       end
-      self.update(dates: new_dates)
+      self.update(dates: new_dates) unless destroyed?
     end
   end
 
