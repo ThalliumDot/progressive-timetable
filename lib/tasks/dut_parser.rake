@@ -248,7 +248,8 @@ def compare_lessons(planned_lessons, parsed_lessons, time_interval, group_id)
     planned_lesson = find_exact_match(planned_lessons, parsed_lesson)
     if planned_lesson.blank?
       planned_lesson = find_enough_match(planned_lessons, parsed_lesson)
-      if planned_lesson.present?
+      if planned_lesson.present? &&
+        planned_lesson.persisted? # TODO: investigate 'frozen hash' error without this line
         planned_lesson.reject_and_update_dates(planned_lesson.dates, parsed_lesson[:dates])
       end
       PlannedLesson.create_with_linked(parsed_lesson.except(:other).merge(group_id: group_id))
