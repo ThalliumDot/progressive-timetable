@@ -44,7 +44,7 @@ class PlannedLesson < ApplicationRecord
     }
   }
 
-  after_commit :delete_empty_dates
+  after_commit :destroy_if_dates_empty
 
   belongs_to :group
   belongs_to :lesson
@@ -66,28 +66,35 @@ class PlannedLesson < ApplicationRecord
       short_name: parsed_lesson[:short_name],
       long_name: parsed_lesson[:long_name]
     )
+
     last_name, first_name, middle_name = parsed_lesson[:teacher].strip.split(/\s+/)
+
     teacher = Teacher.find_or_create_by(
       first_name: first_name,
       last_name: last_name,
       middle_name: middle_name
     )
+
     self.create(parsed_lesson.except(:short_name, :long_name, :teacher)) do |planned_lesson|
       planned_lesson.lesson_id = lesson.id
       planned_lesson.teacher_id = teacher.id
     end
   end
 
-  def delete_empty_dates
+  def destroy_if_dates_empty
     self.delete if dates.length == 0
   end
 
   def reject_and_update_dates(lesson_dates, parsed_dates)
+    return unless self.destroyed?
+
     dates = lesson_dates.reject{ |date| parsed_dates.include?(date) }
     self.update(dates: dates)
   end
 
   def check_and_update_dates(lesson_dates, parsed_dates)
+    return unless self.destroyed?
+
     if (lesson_dates <=> parsed_dates) != 0
       new_dates = lesson_dates
       parsed_dates.each do |parsed_date|

@@ -12,7 +12,7 @@ class LessonsController < ApplicationController
 
     time_start, time_end = get_timings_from_request
 
-    lessons = Lesson.for_group_and_period(params[:group_name], time_start, time_end)
+    lessons = PlannedLesson.for_group_and_period(params[:group_name], time_start, time_end)
 
     render json: lessons
   end
